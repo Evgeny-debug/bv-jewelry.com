@@ -1031,11 +1031,10 @@
             if(!actProd.sku) return alert('Артикул (SKU) обов\'язковий!');
             if(!actProd.variations.base.name.uk) return alert('Базова назва товару (UA) обов\'язкова!');
 
-            // Якщо режим auto, остаточно перераховуємо ціну перед збереженням
-            Object.keys(actProd.variations).forEach(k => {
-                const v = actProd.variations[k];
+            // Внутри saveActiveProduct замени расчет на:
+            Object.values(actProd.variations).forEach(v => {
                 if(v.priceType === 'auto' && v.weight && v.workCost) {
-                    v.price = Math.round((Number(v.weight) * Number(siteSettings.goldRate || 0)) + Number(v.workCost));
+                v.price = Math.round((Number(v.weight) * Number(siteSettings.goldRate || 0)) + Number(v.workCost));
                 }
             });
 
@@ -1519,49 +1518,58 @@
         }
 
         async function saveSiteSettings() {
-            const oldRate = siteSettings.goldRate;
-            const newRate = document.getElementById('set-gold-rate').value;
-            const newRatio = document.getElementById('set-banner-ratio').value;
-            
-            const addrInputs = document.querySelectorAll('.addr-input');
-            const savedAddresses = Array.from(addrInputs).map(inp => inp.value.trim()).filter(val => val !== '');
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = 'Зберігаю...';
+    btn.disabled = true;
 
-            siteSettings = {
-                phone: document.getElementById('set-phone').value, 
-                tgLink: document.getElementById('set-tg').value,
-                instLink: document.getElementById('set-inst').value, 
-                addresses: savedAddresses,
-                goldRate: newRate,
-                bannerRatio: newRatio,
-                heroBg: siteSettings.heroBg,
-                heroOpacity: siteSettings.heroOpacity
-            };
-            
-            await saveToCloudStorage('bv_settings', siteSettings);
-            
-            // Оновлюємо ціни товарів, якщо змінився курс золота
-            if (oldRate !== newRate && newRate > 0) {
-                products.forEach(p => {
-                    const bases = [p.variations.base];
-                    Object.values(p.variations).forEach(v => {
-                        if(v !== p.variations.base) bases.push(v);
-                    });
-                    
-                    bases.forEach(v => {
-                        if (v.weight && v.workCost) {
-                            v.price = Math.round((Number(v.weight) * Number(newRate)) + Number(v.workCost));
-                        }
-                    });
+    try {
+        const oldRate = Number(siteSettings.goldRate) || 0;
+        const newRate = Number(document.getElementById('set-gold-rate').value) || 0;
+        const newRatio = document.getElementById('set-banner-ratio').value;
+        
+        const addrInputs = document.querySelectorAll('.addr-input');
+        const savedAddresses = Array.from(addrInputs).map(inp => inp.value.trim()).filter(val => val !== '');
+
+        // Обновляем объект настроек
+        siteSettings = {
+            ...siteSettings,
+            phone: document.getElementById('set-phone').value,
+            tgLink: document.getElementById('set-tg').value,
+            instLink: document.getElementById('set-inst').value,
+            addresses: savedAddresses,
+            goldRate: newRate,
+            bannerRatio: newRatio
+        };
+        
+        // Сохраняем настройки в БД
+        await saveToCloudStorage('bv_settings', siteSettings);
+        
+        // Авто-пересчет цен, если курс изменился
+        if (oldRate !== newRate && newRate > 0) {
+            products.forEach(p => {
+                // Проходимся по всем вариациям товара
+                Object.values(p.variations).forEach(v => {
+                    if (v.priceType === 'auto' && v.weight && v.workCost) {
+                        v.price = Math.round((Number(v.weight) * newRate) + Number(v.workCost));
+                    }
                 });
-                
-                await _supabase.from('products').upsert(products);
-                filteredProducts = [...products];
-                renderProducts();
-            }
+            });
             
-            renderBannersAdmin();
-            showNotification('Глобальні налаштування збережено');
+            await _supabase.from('products').upsert(products);
+            renderProducts(); // Обновляем таблицу в админке
+            showNotification('Курс оновлено, ціни перераховано!');
+        } else {
+            showNotification('Налаштування збережено');
         }
+    } catch (err) {
+        console.error(err);
+        alert('Помилка: ' + err.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
 
         async function logout() { 
             await _supabase.auth.signOut();
