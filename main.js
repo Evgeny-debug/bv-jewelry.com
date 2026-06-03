@@ -377,7 +377,9 @@ function generateMenus() {
                 </div>
                 
                 <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Прайс</span></a>
-                
+                <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
+                        <span data-i18n="m_atelier">Ексклюзив</span>
+                    </a>
                 <div class="menu-divider mt-4"></div>
                 
                 <div class="mt-auto pt-4 pb-4">
@@ -387,9 +389,7 @@ function generateMenus() {
                         <span>м. Ізмаїл, вул. Торгова, 68</span>
                     </div>
 
-                    <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
-                        <span data-i18n="m_atelier">Ексклюзив</span>
-                    </a>
+                    
                 </div>
             </div>
         `;
