@@ -1328,6 +1328,17 @@ window.loginWithApple = async function() {
 window.updateProfileMenu = function() {
     const user = getCurrentUser();
     const dropdownMenu = document.getElementById('profileDropdownMenu');
+    // ДОДАЄМО: оновлюємо подію для кліку на іконку профілю в шапці
+    const profileBtn = document.getElementById('headerProfileBtn');
+    if (profileBtn) {
+        // Якщо юзер є - перекидаємо в кабінет, якщо нема - відкриваємо модалку
+        profileBtn.onclick = function() {
+            if (user) location.href = 'profile.html';
+            else window.openAuthModal();
+        };
+    }
+
+    
     if(dropdownMenu) {
         if (user) {
             dropdownMenu.innerHTML = `
