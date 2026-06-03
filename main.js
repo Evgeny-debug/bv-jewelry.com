@@ -356,9 +356,9 @@ function generateMenus() {
                 <div class="menu-divider"></div>
                 
                 <div>
-                    <div class="mob-menu-title cursor-pointer" onclick="window.toggleAccordion('mobCatList', 'mobCatArrow')">
+                    <div class="mob-menu-title" onclick="window.toggleAccordion('mobCatList', 'mobCatArrow')">
                         <span data-i18n="m2">Каталог</span>
-                        <svg id="mobCatArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform duration-300"><path d="M6 9l6 6 6-6"/></svg>
+                        <svg id="mobCatArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-muted)" stroke-width="2" class="transition-transform duration-300"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
                     <div class="mob-accordion-list" id="mobCatList" style="gap: 0; padding-left: 0;">${mobCatHtml}</div>
                 </div>
