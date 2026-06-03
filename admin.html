@@ -1025,27 +1025,55 @@
             actProd.badge = document.getElementById('prod-badge').value;
             actProd.variant = document.getElementById('prod-variant').value;
             actProd.stones = document.getElementById('prod-stones').value;
-            
             actProd.blocks = Array.from(document.querySelectorAll('.prod-block-cb:checked')).map(cb => cb.value);
 
             if(!actProd.sku) return alert('Артикул (SKU) обов\'язковий!');
             if(!actProd.variations.base.name.uk) return alert('Базова назва товару (UA) обов\'язкова!');
 
-            // Внутри saveActiveProduct замени расчет на:
-            Object.values(actProd.variations).forEach(v => {
-                if(v.priceType === 'auto' && v.weight && v.workCost) {
-                v.price = Math.round((Number(v.weight) * Number(siteSettings.goldRate || 0)) + Number(v.workCost));
+            // --- КАСКАДНА АВТОЦІНА ТА УСПАДКУВАННЯ ---
+            const base = actProd.variations.base;
+            let currWeight = Number(base.weight) || 0;
+            let currWorkCost = Number(base.workCost) || 0;
+            let currDiscount = Number(base.discount) || null;
+            
+            // Рахуємо базу
+            if (base.priceType === 'auto') {
+                base.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
+            }
+
+            // Сортуємо розміри по зростанню (15.5, 16.0, 16.5...)
+            const sortedSizes = [...actProd.sizes].sort((a, b) => parseFloat(a) - parseFloat(b));
+
+            sortedSizes.forEach(size => {
+                const v = actProd.variations[size];
+                if (!v) return;
+
+                // Якщо вписали своє - беремо його. Якщо пусто - залишається від попереднього меншого розміру
+                if (v.weight && String(v.weight).trim() !== '') currWeight = Number(v.weight);
+                if (v.workCost && String(v.workCost).trim() !== '') currWorkCost = Number(v.workCost);
+                
+                if (v.discount && String(v.discount).trim() !== '') {
+                    currDiscount = Number(v.discount);
+                } else if (v.discount === '0' || v.discount === 0) {
+                    currDiscount = null; // Якщо написали 0, знижка знімається
+                }
+
+                // Записуємо успадковані дані назад у розмір
+                v.weight = currWeight;
+                v.workCost = currWorkCost;
+                v.discount = currDiscount;
+
+                // Перераховуємо ціну для розміру
+                if (base.priceType === 'auto') {
+                    v.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
                 }
             });
 
-            // ФІКС ПОМИЛКИ БАЗИ: Дублюємо головні дані в корінь об'єкта для Supabase
+            // Дублюємо головні дані в корінь для сумісності з БД
             actProd.name = actProd.variations.base.name.uk;
             actProd.price = actProd.variations.base.price || 0;
-            if (actProd.variations.base.images && actProd.variations.base.images.length > 0) {
-                actProd.img = actProd.variations.base.images[0];
-            } else {
-                actProd.img = '';
-            }
+            actProd.img = (actProd.variations.base.images && actProd.variations.base.images.length > 0) 
+                ? actProd.variations.base.images[0] : '';
 
             const safeSkuId = actProd.sku.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || Date.now();
             actProd.id = actProd.id || `prod_${safeSkuId}_${Date.now()}`;
@@ -1059,9 +1087,8 @@
             filteredProducts = [...products];
             renderProducts();
             closeProductModal();
-            showNotification('Товар збережено в хмару!');
+            showNotification('Товар збережено!');
         }
-
         async function deleteProduct(id) {
             if(confirm('Точно видалити цей товар?')) {
                 await _supabase.from('products').delete().eq('id', id);
