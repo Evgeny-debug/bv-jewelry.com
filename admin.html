@@ -923,20 +923,25 @@
 
             // Оновлюємо виділення варіацій
             let vTabs = `<button type="button" class="tab-var px-3 py-2 text-xs font-bold whitespace-nowrap ${editVar==='base'?'active':''}" onclick="switchVarTab('base')">Основна</button>`;
-            actProd.sizes.forEach(s => {
-                vTabs += `
-                <div class="flex items-center tab-var px-2 py-1 text-xs font-bold whitespace-nowrap ${editVar===s?'active':''}">
-                    <button type="button" onclick="switchVarTab('${s}')" class="px-2">Розмір: ${s}</button>
-                    <button type="button" onclick="removeVariationSize('${s}')" class="text-red-500 hover:text-white px-1">&times;</button>
-                </div>`;
-            });
+            if (actProd.sizes && actProd.sizes.length > 0) {
+                actProd.sizes.forEach(s => {
+                    vTabs += `
+                    <div class="flex items-center tab-var px-2 py-1 text-xs font-bold whitespace-nowrap ${editVar===s?'active':''}">
+                        <button type="button" onclick="switchVarTab('${s}')" class="px-2">Розмір: ${s}</button>
+                        <button type="button" onclick="removeVariationSize('${s}')" class="text-red-500 hover:text-white px-1">&times;</button>
+                    </div>`;
+                });
+            }
             vTabs += `<button type="button" onclick="addVariationSize()" class="px-3 py-1 text-xs font-bold text-green-400 hover:bg-white/5 rounded ml-2">+ Додати розмір</button>`;
             document.getElementById('varTabsContainer').innerHTML = vTabs;
 
-            const vData = actProd.variations[editVar] || {};
+            // БРОНЕБІЙНИЙ ЗАХИСТ: якщо об'єкта ще немає, створюємо його жорстко
+            if (!actProd.variations[editVar]) {
+                actProd.variations[editVar] = { name:{uk:'', ru:'', en:''}, desc:{uk:'', ru:'', en:''}, images:[], price:'', weight:'', workCost:'', priceType: 'manual' };
+            }
+            const vData = actProd.variations[editVar];
             const isBase = editVar === 'base';
             
-            // Захист об'єктів
             if(!vData.name) vData.name = {uk:'', ru:'', en:''};
             if(!vData.desc) vData.desc = {uk:'', ru:'', en:''};
             if(!vData.priceType) vData.priceType = isBase ? 'manual' : (actProd.variations.base.priceType || 'manual');
@@ -990,7 +995,6 @@
                         <label class="text-[10px] uppercase text-gray-400 block mb-1">Акційна ціна</label>
                         <input type="number" id="var-discount" class="input-field" value="${vData.discount || ''}" placeholder="${isBase?'Немає':(baseData.discount||'Від Основної')}" oninput="actProd.variations['${editVar}'].discount = this.value">
                     </div>
-
                 </div>
 
                 <div class="mt-4 border-t border-white/10 pt-4">
@@ -1048,94 +1052,111 @@
         }
 
         async function saveActiveProduct() {
-            // Примусово зчитуємо значення з відкритих полів перед збереженням!
-            if (document.getElementById('var-weight')) {
-                actProd.variations[editVar].weight = document.getElementById('var-weight').value;
-                actProd.variations[editVar].workCost = document.getElementById('var-workCost').value;
-                actProd.variations[editVar].price = document.getElementById('var-price').value;
-                actProd.variations[editVar].discount = document.getElementById('var-discount').value;
-                actProd.variations[editVar].priceType = document.getElementById('var-price-type').value;
-                actProd.variations[editVar].name[editLang] = document.getElementById('var-name').value;
-                actProd.variations[editVar].desc[editLang] = document.getElementById('var-desc').value;
-            }
+            // Знаходимо кнопку, щоб показати стан "Зберігаю..."
+            const submitBtn = document.querySelector('.btn-primary[onclick="saveActiveProduct()"]');
+            if(submitBtn) { submitBtn.innerText = 'Зберігаю...'; submitBtn.disabled = true; }
 
-            actProd.sku = document.getElementById('prod-sku').value.trim();
-            actProd.category = document.getElementById('prod-category').value;
-            actProd.status = document.getElementById('prod-status').value;
-            actProd.badge = document.getElementById('prod-badge').value;
-            actProd.variant = document.getElementById('prod-variant').value;
-            actProd.stones = document.getElementById('prod-stones').value;
-            actProd.blocks = Array.from(document.querySelectorAll('.prod-block-cb:checked')).map(cb => cb.value);
+            try {
+                // ПРИМУСОВЕ збереження з полів (захист від втрати фокусу)
+                if (document.getElementById('var-weight')) {
+                    actProd.variations[editVar].weight = document.getElementById('var-weight').value;
+                    actProd.variations[editVar].workCost = document.getElementById('var-workCost').value;
+                    actProd.variations[editVar].price = document.getElementById('var-price').value;
+                    actProd.variations[editVar].discount = document.getElementById('var-discount').value;
+                    const pType = document.getElementById('var-price-type');
+                    if(pType) actProd.variations[editVar].priceType = pType.value;
+                    actProd.variations[editVar].name[editLang] = document.getElementById('var-name').value;
+                    actProd.variations[editVar].desc[editLang] = document.getElementById('var-desc').value;
+                }
 
-            if(!actProd.sku) return alert('Артикул (SKU) обов\'язковий!');
-            if(!actProd.variations.base.name.uk) return alert('Базова назва товару (UA) обов\'язкова!');
+                actProd.sku = document.getElementById('prod-sku').value.trim();
+                actProd.category = document.getElementById('prod-category').value;
+                actProd.status = document.getElementById('prod-status').value;
+                actProd.badge = document.getElementById('prod-badge').value;
+                actProd.variant = document.getElementById('prod-variant').value;
+                actProd.stones = document.getElementById('prod-stones').value;
+                actProd.blocks = Array.from(document.querySelectorAll('.prod-block-cb:checked')).map(cb => cb.value);
 
-            // --- КАСКАДНА АВТОЦІНА ТА УСПАДКУВАННЯ ---
-            const base = actProd.variations.base;
-            let currWeight = Number(base.weight) || 0;
-            let currWorkCost = Number(base.workCost) || 0;
-            let currDiscount = (base.discount && String(base.discount).trim() !== '') ? Number(base.discount) : null;
-            let currPriceType = base.priceType || 'manual';
-            
-            // Рахуємо базу
-            if (currPriceType === 'auto') {
-                base.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
-            }
+                if(!actProd.sku) throw new Error('Артикул (SKU) обов\'язковий!');
+                if(!actProd.variations.base.name.uk) throw new Error('Базова назва товару (UA) обов\'язкова!');
 
-            // Сортуємо розміри по зростанню (15.5, 16.0, 16.5...)
-            const sortedSizes = [...actProd.sizes].sort((a, b) => parseFloat(a) - parseFloat(b));
-
-            sortedSizes.forEach(size => {
-                const v = actProd.variations[size];
-                if (!v) return;
-
-                // Успадкування типу ціни (якщо не вибрано, беремо від меншого/бази)
-                if (v.priceType === 'auto' || v.priceType === 'manual') currPriceType = v.priceType;
-                else v.priceType = currPriceType;
-
-                // Успадкування ваги та роботи (якщо поле не пусте - беремо його, якщо пусте - від попереднього)
-                if (v.weight && String(v.weight).trim() !== '') currWeight = Number(v.weight);
-                if (v.workCost && String(v.workCost).trim() !== '') currWorkCost = Number(v.workCost);
+                // --- КАСКАДНА АВТОЦІНА ТА УСПАДКУВАННЯ ---
+                const base = actProd.variations.base;
+                let currWeight = Number(base.weight) || 0;
+                let currWorkCost = Number(base.workCost) || 0;
+                let currDiscount = (base.discount && String(base.discount).trim() !== '') ? Number(base.discount) : null;
+                let currPriceType = base.priceType || 'manual';
                 
-                // Успадкування акції (якщо 0, то скидаємо акцію)
-                if (v.discount && String(v.discount).trim() !== '') {
-                    currDiscount = Number(v.discount);
-                } else if (v.discount === '0' || v.discount === 0) {
-                    currDiscount = null; 
-                }
-
-                // Записуємо успадковані дані назад у розмір
-                v.weight = currWeight;
-                v.workCost = currWorkCost;
-                v.discount = currDiscount;
-
-                // Фінальний розрахунок ціни
+                // Рахуємо базу
                 if (currPriceType === 'auto') {
-                    v.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
+                    base.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
                 } else {
-                    if(!v.price || String(v.price).trim() === '') v.price = base.price;
+                    base.price = Number(base.price) || 0;
                 }
-            });
 
-            // Дублюємо головні дані в корінь для сумісності з БД
-            actProd.name = actProd.variations.base.name.uk;
-            actProd.price = actProd.variations.base.price || 0;
-            actProd.img = (actProd.variations.base.images && actProd.variations.base.images.length > 0) 
-                ? actProd.variations.base.images[0] : '';
+                // Сортуємо розміри по зростанню і протаскуємо параметри
+                if (actProd.sizes && actProd.sizes.length > 0) {
+                    const sortedSizes = [...actProd.sizes].sort((a, b) => parseFloat(a) - parseFloat(b));
 
-            const safeSkuId = actProd.sku.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || Date.now();
-            actProd.id = actProd.id || `prod_${safeSkuId}_${Date.now()}`;
+                    sortedSizes.forEach(size => {
+                        if (!actProd.variations[size]) actProd.variations[size] = { name:{uk:'',ru:'',en:''}, desc:{uk:'',ru:'',en:''}, images:[], price:'', weight:'', workCost:'', priceType: currPriceType };
+                        const v = actProd.variations[size];
 
-            const { error } = await _supabase.from('products').upsert(actProd);
-            if(error) return alert("Помилка збереження: " + error.message);
+                        // Успадкування типу ціни
+                        if (!v.priceType || v.priceType.trim() === '') v.priceType = currPriceType;
+                        currPriceType = v.priceType;
 
-            const i = products.findIndex(p => p.id === actProd.id);
-            if (i !== -1) products[i] = actProd; else products.unshift(actProd);
-            
-            filteredProducts = [...products];
-            renderProducts();
-            closeProductModal();
-            showNotification('Товар збережено!');
+                        // Успадкування ваги та роботи (якщо вписали своє - беремо його, якщо пусто - беремо від попереднього)
+                        if (v.weight && String(v.weight).trim() !== '') currWeight = Number(v.weight);
+                        v.weight = currWeight;
+
+                        if (v.workCost && String(v.workCost).trim() !== '') currWorkCost = Number(v.workCost);
+                        v.workCost = currWorkCost;
+                        
+                        // Успадкування акції
+                        if (v.discount && String(v.discount).trim() !== '') {
+                            currDiscount = Number(v.discount);
+                        } else if (String(v.discount).trim() === '0') {
+                            currDiscount = null; // Зняти знижку
+                        }
+                        v.discount = currDiscount;
+
+                        // Перераховуємо ціну
+                        if (currPriceType === 'auto') {
+                            v.price = Math.round((currWeight * Number(siteSettings.goldRate || 0)) + currWorkCost);
+                        } else {
+                            if(!v.price || String(v.price).trim() === '') v.price = base.price; // успадковуємо фіксовану ціну
+                        }
+                    });
+                }
+
+                // Дублюємо головні дані для Supabase
+                actProd.name = actProd.variations.base.name.uk;
+                actProd.price = actProd.variations.base.price || 0;
+                actProd.img = (actProd.variations.base.images && actProd.variations.base.images.length > 0) 
+                    ? actProd.variations.base.images[0] : '';
+
+                const safeSkuId = actProd.sku.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || Date.now();
+                actProd.id = actProd.id || `prod_${safeSkuId}_${Date.now()}`;
+
+                const { error } = await _supabase.from('products').upsert(actProd);
+                if(error) throw new Error(error.message);
+
+                const i = products.findIndex(p => p.id === actProd.id);
+                if (i !== -1) products[i] = actProd; else products.unshift(actProd);
+                
+                filteredProducts = [...products];
+                renderProducts();
+                closeProductModal();
+                showNotification('Товар збережено!');
+
+                if(submitBtn) { submitBtn.innerText = 'Зберегти товар'; submitBtn.disabled = false; }
+
+            } catch (err) {
+                console.error("Помилка при збереженні товару:", err);
+                alert("Увага: " + err.message);
+                if(submitBtn) { submitBtn.innerText = 'Зберегти товар'; submitBtn.disabled = false; }
+            }
         }
         async function deleteProduct(id) {
             if(confirm('Точно видалити цей товар?')) {
