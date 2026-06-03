@@ -459,50 +459,12 @@
     <script type="module" src="main.js"></script>
 
     <script>
-        const sbClient = window.supabase.createClient('https://trcjsnvcdonlzxprgdzd.supabase.co', 'sb_publishable_qSUZxk_9JV9wJNrdjAqeLA_8O_8-TVV');
-        
-        window.smartProfileClick = async function() {
-            const sideMenu = document.getElementById('sideMenu');
-            if(sideMenu && sideMenu.classList.contains('active')) {
-                if(typeof window.toggleMenu === 'function') window.toggleMenu();
-            }
-            const modal = document.getElementById('authModal');
-            if(!modal) return;
-            try {
-                const { data: { session } } = await sbClient.auth.getSession();
-                const formContainer = document.getElementById('authFormContainer');
-                const profileView = document.getElementById('profileView');
-
-                if (session && session.user) {
-                    const { data: profile } = await sbClient.from('profiles').select('role, full_name').eq('id', session.user.id).single();
-                    if(formContainer) formContainer.style.display = 'none';
-                    if(profileView) { profileView.style.display = 'flex'; profileView.classList.remove('hidden'); }
-                    
-                    const role = profile?.role || 'client';
-                    const name = profile?.full_name || session.user.user_metadata?.full_name || 'Клієнт';
-                    
-                    document.getElementById('profName').innerText = name;
-                    document.getElementById('profAvatar').innerText = name.charAt(0).toUpperCase();
-                    document.getElementById('profEmail').innerText = session.user.email;
-                    
-                    if (role === 'admin') document.getElementById('adminLinkBtn').classList.remove('hidden');
-                    else document.getElementById('adminLinkBtn').classList.add('hidden');
-                } else {
-                    if(profileView) { profileView.style.display = 'none'; profileView.classList.add('hidden'); }
-                    if(formContainer) { formContainer.style.display = 'block'; formContainer.classList.remove('hidden'); }
-                    if (typeof window.updateAuthView === 'function') { window.isRegisterMode = false; window.updateAuthView(); }
-                }
-            } catch (err) {}
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0'), 10);
-        };
-
-        // ЛОГІКА ТОВАРУ (ВАРІАЦІЇ РОЗМІРІВ)
         let currentGalleryIndex = 0;
         let productGallery = [];
         let currentProduct = null;
         let currentLang = 'uk';
 
+        // --- ЛОГІКА ЧИТАННЯ ДАНИХ (УСПАДКУВАННЯ ВІД ОСНОВНОЇ) ---
         function getVarData(prod, size, field, lang = null) {
             const b = prod.variations ? prod.variations.base : prod;
             const v = (prod.variations && size && prod.variations[size]) ? prod.variations[size] : b;
@@ -515,84 +477,42 @@
             return v[field] || b[field] || '';
         }
 
+        // --- ЛОГІКА КЛІКУ НА РОЗМІР (ОНОВЛЕННЯ ЦІНИ ТА ВАГИ) ---
         window.selectSize = function(btn, size) {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             document.getElementById('selected-size-label').innerText = size;
             window.currentSelectedSize = size;
-
-            // Використовуємо твою змінну currentProduct
-            if (typeof currentProduct !== 'undefined' && currentProduct) {
-                const vData = currentProduct.variations[size] || currentProduct.variations.base;
-                const baseData = currentProduct.variations.base;
-                
-                // 1. Оновлюємо вагу (беремо з розміру, або з бази, якщо пусто)
-                const finalWeight = vData.weight || baseData.weight; 
-                if (finalWeight && Number(finalWeight) > 0) {
-                    const weightEl = document.getElementById('pd-spec-weight');
-                    if(weightEl) weightEl.innerText = finalWeight + ' г';
-                    document.getElementById('pd-spec-weight-row')?.classList.remove('hidden');
-                }
-
-                // 2. Оновлюємо ціну та знижку
-                const finalDiscount = vData.discount || baseData.discount;
-                const finalPrice = vData.price || baseData.price;
-                
-                const hasDiscount = finalDiscount && Number(finalDiscount) > 0;
-                const currentDisplayPrice = hasDiscount ? finalDiscount : finalPrice;
-                
-                let priceHtmlDesktop = hasDiscount 
-                    ? `<span class="text-3xl lg:text-4xl font-bold text-[var(--success)]">${formatterPrice.format(finalDiscount)} ₴</span>
-                       <span class="text-lg text-[var(--text-muted)] line-through ml-3">${formatterPrice.format(finalPrice)} ₴</span>`
-                    : `<span class="text-3xl lg:text-4xl font-bold text-[var(--gold-muted)]">${formatterPrice.format(finalPrice)} ₴</span>`;
-                
-                const priceDesktopEl = document.getElementById('pd-price-desktop');
-                if(priceDesktopEl) priceDesktopEl.innerHTML = priceHtmlDesktop;
-
-                // 3. Оновлюємо кнопки "Купити"
-                const btnTextDesktop = hasDiscount ? `Купити зі знижкою за ${formatterPrice.format(currentDisplayPrice)}` : `Купити за ${formatterPrice.format(currentDisplayPrice)}`;
-                const btnTextMob = hasDiscount ? `Зі знижкою за ${formatterPrice.format(currentDisplayPrice)}` : `Купити за ${formatterPrice.format(currentDisplayPrice)}`;
-                
-                const btnDesktop = document.getElementById('pd-add-btn-desktop');
-                const btnMob = document.getElementById('pd-add-btn-mob');
-                
-                if(btnDesktop) btnDesktop.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${btnTextDesktop}</span>`;
-                if(btnMob) btnMob.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${btnTextMob}</span>`;
-
-                // 4. Оновлюємо onClick для кошика
-                const locName = window.getLoc(vData, 'name') || window.getLoc(baseData, 'name') || currentProduct.name;
-                const finalName = `${locName} (Розмір: ${size})`;
-                const img = (vData.images && vData.images.length > 0) ? vData.images[0] : (baseData.images && baseData.images.length > 0 ? baseData.images[0] : '');
-
-                const onBuy = () => window.addToCart(currentProduct.id, finalName, currentProduct.variant, currentDisplayPrice, img);
-                
-                if(btnDesktop && !btnDesktop.disabled) btnDesktop.onclick = onBuy;
-                if(btnMob && !btnMob.disabled) btnMob.onclick = onBuy;
-            }
+            window.updateProductUI();
         };
 
+        // --- ГОЛОВНА ФУНКЦІЯ ОНОВЛЕННЯ ІНТЕРФЕЙСУ ТОВАРУ ---
         window.updateProductUI = function() {
             if(!currentProduct) return;
             const size = window.currentSelectedSize || 'base';
-            currentLang = API.get('bv_lang', 'uk');
+            currentLang = typeof API !== 'undefined' ? API.get('bv_lang', 'uk') : 'uk';
 
-            const name = getVarData(currentProduct, size, 'name', currentLang) || window.getLoc(currentProduct, 'name') || currentProduct.name;
-            const desc = getVarData(currentProduct, size, 'desc', currentLang) || window.getLoc(currentProduct, 'desc') || currentProduct.desc;
+            // Отримуємо локалізовані та успадковані дані
+            const name = getVarData(currentProduct, size, 'name', currentLang) || (window.getLoc ? window.getLoc(currentProduct, 'name') : currentProduct.name);
+            const desc = getVarData(currentProduct, size, 'desc', currentLang) || (window.getLoc ? window.getLoc(currentProduct, 'desc') : currentProduct.desc);
             const price = getVarData(currentProduct, size, 'price');
             const discount = getVarData(currentProduct, size, 'discount');
             const weight = getVarData(currentProduct, size, 'weight');
 
+            // 1. Оновлюємо тексти
             document.getElementById('pd-title').innerText = name;
             if(document.getElementById('pd-title-mob')) document.getElementById('pd-title-mob').innerText = name;
             document.getElementById('pd-desc-full').innerText = desc || 'Опис відсутній';
             
+            // 2. Оновлюємо вагу
             if(weight && Number(weight) > 0) {
                 document.getElementById('pd-spec-weight').innerText = weight + ' г';
-                document.getElementById('pd-spec-weight-row').classList.remove('hidden');
+                document.getElementById('pd-spec-weight-row')?.classList.remove('hidden');
             } else {
-                document.getElementById('pd-spec-weight-row').classList.add('hidden');
+                document.getElementById('pd-spec-weight-row')?.classList.add('hidden');
             }
 
+            // 3. Оновлюємо ціну
             const hasDiscount = discount && Number(discount) > 0;
             const currentPrice = hasDiscount ? discount : price;
             
@@ -600,20 +520,24 @@
                 ? `<span class="text-3xl lg:text-4xl font-bold text-[var(--success)]">${formatterPrice.format(discount)} ₴</span>
                    <span class="text-lg text-[var(--text-muted)] line-through ml-3">${formatterPrice.format(price)} ₴</span>`
                 : `<span class="text-3xl lg:text-4xl font-bold text-[var(--gold-muted)]">${formatterPrice.format(price)} ₴</span>`;
+            
             if(document.getElementById('pd-price-desktop')) document.getElementById('pd-price-desktop').innerHTML = priceHtmlDesktop;
 
+            // 4. Оновлюємо кнопки та їх onClick
             const isOutOfStock = currentProduct.status === 'out-stock';
             const setupAddBtn = (id) => {
                 const btn = document.getElementById(id);
                 if(!btn) return;
+                
                 if(isOutOfStock) {
                     btn.disabled = true;
                     btn.classList.add('opacity-50', 'cursor-not-allowed');
-                    btn.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${i18n[currentLang].out_stock || 'Немає в наявності'}</span>`;
+                    btn.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${i18n?.[currentLang]?.out_stock || 'Немає в наявності'}</span>`;
                 } else {
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    btn.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${i18n[currentLang].btn_buy || 'Купити'} за ${formatterPrice.format(currentPrice)}</span>`;
+                    btn.innerHTML = `<span class="uppercase font-bold tracking-widest text-[11px]">${i18n?.[currentLang]?.btn_buy || 'Купити'} за ${formatterPrice.format(currentPrice)}</span>`;
+                    
                     btn.onclick = () => {
                         const needsSize = !document.getElementById('pd-sizes-container').classList.contains('hidden');
                         if (needsSize && !window.currentSelectedSize) {
@@ -626,9 +550,11 @@
                     };
                 }
             };
+            
             setupAddBtn('pd-add-btn-desktop');
             setupAddBtn('pd-add-btn-mob');
 
+            // 5. Оновлюємо галерею, якщо фото для розміру відрізняються
             const newGallery = getVarData(currentProduct, size, 'images');
             if(JSON.stringify(newGallery) !== JSON.stringify(productGallery)) {
                 productGallery = newGallery;
@@ -636,6 +562,7 @@
             }
         };
 
+        // --- ГАЛЕРЕЯ ---
         function rebuildGallery() {
             const track = document.getElementById('pd-gallery-track');
             const dots = document.getElementById('pd-gallery-dots');
@@ -716,20 +643,26 @@
             document.body.style.overflow = '';
         };
 
+        // --- РЕНДЕР СТОРІНКИ ТОВАРУ ---
         window.renderProductPage = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            const allProducts = API.get('bv_products', []);
-            const categories = API.get('bv_categories_tree', []) || API.get('bv_categories_flat', []);
+            const allProducts = typeof API !== 'undefined' ? API.get('bv_products', []) : [];
+            const categories = typeof API !== 'undefined' ? (API.get('bv_categories_tree', []) || API.get('bv_categories_flat', [])) : [];
 
             currentProduct = productId ? allProducts.find(p => p.id === productId) : allProducts[0];
-            if (!currentProduct) return;
+            if (!currentProduct) {
+                document.getElementById('pd-title').innerText = 'Товар не знайдено';
+                if(document.getElementById('pd-title-mob')) document.getElementById('pd-title-mob').innerText = 'Товар не знайдено';
+                return;
+            }
 
             productGallery = getVarData(currentProduct, 'base', 'images');
             
+            // Налаштування свайпу
             let touchStartX = 0; let touchEndX = 0;
             const galleryContainer = document.getElementById('pd-gallery-container');
-            if (!galleryContainer.dataset.touchAttached) {
+            if (galleryContainer && !galleryContainer.dataset.touchAttached) {
                 galleryContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
                 galleryContainer.addEventListener('touchend', e => {
                     touchEndX = e.changedTouches[0].screenX;
@@ -741,6 +674,7 @@
                 galleryContainer.dataset.touchAttached = 'true';
             }
 
+            // Статичні дані (Артикул, Метал, Камені)
             ['pd-sku', 'pd-spec-sku', 'pd-sku-mob'].forEach(id => {
                 if(document.getElementById(id)) document.getElementById(id).innerText = currentProduct.sku || currentProduct.id;
             });
@@ -748,21 +682,23 @@
             
             if(currentProduct.stones && currentProduct.stones.trim() !== '') {
                 document.getElementById('pd-spec-stones').innerText = currentProduct.stones;
-                document.getElementById('pd-spec-stones-row').classList.remove('hidden');
+                document.getElementById('pd-spec-stones-row')?.classList.remove('hidden');
             }
 
+            // Категорія
             const catObj = categories.find(c => c.id === currentProduct.category) || {};
-            const catName = window.getLoc(catObj.name) || currentProduct.category;
+            const catName = window.getLoc ? window.getLoc(catObj.name) || currentProduct.category : currentProduct.category;
             document.getElementById('pd-category-name').innerText = catName;
             document.getElementById('pd-category-link').href = `catalog.html#${currentProduct.category}`;
             if(document.getElementById('pd-category-name-mob')) document.getElementById('pd-category-name-mob').innerText = catName;
             if(document.getElementById('pd-category-link-mob')) document.getElementById('pd-category-link-mob').href = `catalog.html#${currentProduct.category}`;
 
+            // Розміри
             const sizesContainer = document.getElementById('pd-sizes-container');
             const sizesList = document.getElementById('pd-sizes-list');
             if (currentProduct.sizes && currentProduct.sizes.length > 0) {
                 sizesList.innerHTML = currentProduct.sizes.map(s => `
-                    <button class="size-btn btn-cross border border-[var(--border)] text-[var(--text-main)] hover:border-[var(--gold-muted)] py-2 px-4 text-[11px] font-medium transition-colors rounded-md" onclick="selectSize(this, '${s}')">${s}</button>
+                    <button class="size-btn btn-cross border border-[var(--border)] text-[var(--text-main)] hover:border-[var(--gold-muted)] py-2 px-4 text-[11px] font-medium transition-colors rounded-none" onclick="selectSize(this, '${s}')">${s}</button>
                 `).join('');
                 sizesContainer.classList.remove('hidden');
             } else {
@@ -770,12 +706,14 @@
                 window.currentSelectedSize = null;
             }
 
+            // Статус
             let statusHtml = currentProduct.status === 'out-stock' 
                 ? `<span class="text-[10px] uppercase tracking-widest font-bold text-red-500 border border-red-500/20 px-3 py-1 rounded">Немає в наявності</span>`
                 : `<span class="text-[10px] uppercase tracking-widest font-bold text-green-500 border border-green-500/20 px-3 py-1 rounded">В наявності</span>`;
             document.getElementById('pd-status').innerHTML = statusHtml;
             if(document.getElementById('pd-status-mob')) document.getElementById('pd-status-mob').innerHTML = statusHtml;
 
+            // Улюблене
             const favs = typeof API !== 'undefined' && typeof API.get === 'function' ? API.get('bv_favs', []) : JSON.parse(localStorage.getItem('bv_favs') || '[]');
             const setupFavBtn = (id) => {
                 const btn = document.getElementById(id);
@@ -815,25 +753,35 @@
             setupFavBtn('pd-fav-btn-desktop-img');
             setupFavBtn('pd-fav-btn-mob');
 
+            // Рекомендації
             if (typeof window.renderProductCard === 'function') {
                 let similarProducts = allProducts.filter(p => p.category === currentProduct.category && p.id !== currentProduct.id).sort(() => 0.5 - Math.random()).slice(0, 5);
                 if (similarProducts.length > 0) {
                     document.getElementById('similarGrid').innerHTML = similarProducts.map(p => window.renderProductCard(p)).join('');
-                    document.getElementById('similarSection').classList.remove('hidden');
+                    document.getElementById('similarSection')?.classList.remove('hidden');
                 }
                 let boughtTogether = allProducts.filter(p => p.category !== currentProduct.category && p.id !== currentProduct.id).sort(() => 0.5 - Math.random()).slice(0, 5);
                 if (boughtTogether.length > 0) {
                     document.getElementById('boughtTogetherGrid').innerHTML = boughtTogether.map(p => window.renderProductCard(p)).join('');
-                    document.getElementById('boughtTogetherSection').classList.remove('hidden');
+                    document.getElementById('boughtTogetherSection')?.classList.remove('hidden');
                 }
             }
 
+            // Оновлюємо UI (назва, ціна, вага)
             rebuildGallery();
-            updateProductUI();
+            window.updateProductUI();
         };
 
+        // Запуск при завантаженні (з паузою для підтягування свіжих даних)
         document.addEventListener('DOMContentLoaded', () => {
-            if(typeof window.renderProductPage === 'function') setTimeout(() => window.renderProductPage(), 100); 
+            setTimeout(async () => {
+                if (typeof window.loadCloudData === 'function') {
+                    await window.loadCloudData();
+                }
+                if(typeof window.renderProductPage === 'function') {
+                    window.renderProductPage(); 
+                }
+            }, 200); 
         });
     </script>
 </body>
