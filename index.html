@@ -30,12 +30,83 @@
         /* Базові скидання */
         button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
-        /* --- НИЖНІЙ БАР --- */
+        /* =========================================
+           ІДЕАЛЬНИЙ FULL-WIDTH ТА ФІКС СТРИБКІВ
+           ========================================= */
+        body { 
+            overflow-x: hidden !important; 
+            padding-left: 0 !important; 
+            padding-right: 0 !important; 
+        }
+
+        /* --- ПЛАШКА РОЗРОБКИ --- */
+        #dev-banner {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 6000;
+            background: var(--gold-muted); color: #111; text-align: center;
+            padding: 8px 10px; font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.2em; display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+
+        /* --- ШАПКА: Прозора зверху, накладається на Hero --- */
+        #header {
+            position: fixed !important;
+            top: 30px !important; /* Відступ під плашку */
+            left: 0 !important; right: 0 !important;
+            width: 100vw !important; max-width: 100vw !important;
+            z-index: 5000 !important;
+            background: transparent !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+            transition: all 0.4s ease !important;
+            /* Контент центрується по 1400px */
+            padding-left: max(1rem, calc((100vw - 1400px) / 2)) !important;
+            padding-right: max(1rem, calc((100vw - 1400px) / 2)) !important;
+        }
+        /* Темна шапка при скролі */
+        #header.scrolled {
+            background: var(--bg-card) !important;
+            backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important;
+            border-bottom: 1px solid var(--border) !important;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.08) !important;
+        }
+
+        /* --- HERO БАНЕР: На весь екран (dvh рятує від стрибків на мобілках) --- */
+        .h-screen-hero {
+            width: 100vw !important; max-width: 100vw !important;
+            margin-left: calc(50% - 50vw) !important; margin-right: calc(50% - 50vw) !important;
+            height: 100dvh !important; /* На ПК весь екран */
+            min-height: 0 !important; padding: 0 !important; border-radius: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+        }
+        @media (max-width: 768px) {
+            .h-screen-hero { 
+                /* Мобілка: 100% мінус плашка 30px та нижній бар 60px */
+                height: calc(100dvh - 90px) !important; 
+            }
+        }
+        .hero-content { padding-top: 60px !important; } /* Зсув тексту під шапку */
+        .hero-title { font-size: clamp(3rem, 8vw, 6rem) !important; line-height: 1.1 !important; white-space: normal !important; text-align: center !important; width: 100% !important; }
+
+        /* --- БАНЕРИ ТА ФУТЕР ВІД КРАЮ ДО КРАЮ --- */
+        #promo-banner-top, #promo-banner-top + section, #footer {
+            width: 100vw !important; max-width: 100vw !important;
+            margin-left: calc(50% - 50vw) !important; margin-right: calc(50% - 50vw) !important;
+            border-radius: 0 !important; border-left: none !important; border-right: none !important;
+            padding-left: 0 !important; padding-right: 0 !important;
+        }
+        /* Контент підвала по центру (1400px) */
+        #footer {
+            padding-left: max(1.5rem, calc((100vw - 1400px) / 2)) !important;
+            padding-right: max(1.5rem, calc((100vw - 1400px) / 2)) !important;
+        }
+
+        /* --- НИЖНІЙ БАР: Фікс стрибків UI (safe-area) --- */
         .mobile-bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--bg-card); border-top: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
+            /* Фікс від стрибків браузерної смужки iOS/Android */
             padding: 0; padding-bottom: env(safe-area-inset-bottom);
+            height: calc(60px + env(safe-area-inset-bottom));
             z-index: 5000; width: 100%;
         }
         .bottom-nav-item {
@@ -47,69 +118,46 @@
         .bottom-nav-item.active { color: var(--gold-muted); }
         .bottom-nav-item:active svg { transform: scale(0.85); }
         @media (min-width: 768px) { .mobile-bottom-nav { display: none !important; } }
+        
         .desktop-only { display: none; }
         @media (min-width: 768px) { .desktop-only { display: flex; } .mobile-only { display: none; } }
-        .btn-solid { background-color: var(--text-main) !important; color: var(--bg-body) !important; display: flex !important; justify-content: center !important; align-items: center !important; text-align: center !important; width: 100%; }
+        .btn-solid { background-color: var(--text-main) !important; color: var(--bg-body) !important; display: flex !important; justify-content: center !important; align-items: center !important; text-align: center !important; width: 100%; border: none;}
 
-        /* --- СТРОГИЙ ДИЗАЙН: Жодних скруглень та відступів --- */
-        .banner-slider-container, .banner-slide, .product-card, .glass-panel-item, a.relative.block {
-            border-radius: 0 !important;
-        }
-        .promo-track, .weekly-track, .product-grid-wide, .glass-accordion-container {
-            gap: 0 !important; 
-        }
+        /* --- СТРОГИЙ ДИЗАЙН: Картки, Блоки --- */
+        .banner-slider-container, .banner-slide, .product-card, .glass-panel-item, a.relative.block { border-radius: 0 !important; }
+        .promo-track, .weekly-track, .product-grid-wide, .glass-accordion-container { gap: 0 !important; }
         .promo-carousel-container { padding-top: 0 !important; padding-bottom: 0 !important; margin: 0 !important; }
         section { padding-top: 10px !important; padding-bottom: 10px !important; margin-top: 0 !important; }
         .mb-8.md\:mb-16, .mb-8.md\:mb-12, .mb-6 { margin-bottom: 8px !important; }
-        
-        /* Зменшений Hero-банер */
-        .h-screen-hero { min-height: 0 !important; height: 30vh !important; padding: 0 !important; }
-        
-        #globalContactBtn { display: none !important; } /* Плаваюча кнопка видалена */
+        #globalContactBtn { display: none !important; }
 
-        /* --- КАРТКИ ТОВАРІВ (Строга сітка, білий фон, видалення сірого) --- */
-        .product-card {
-            border: 1px solid #e5e5e5 !important;
-            box-shadow: none !important;
-            background-color: #fff !important;
-            margin-right: -1px; /* Злиття рамок */
-            margin-bottom: -1px;
-        }
+        /* Картки товарів */
+        .product-card { border: 1px solid #e5e5e5 !important; box-shadow: none !important; background-color: #fff !important; margin-right: -1px; margin-bottom: -1px; }
         [data-theme="dark"] .product-card { border-color: #333 !important; background-color: #121212 !important; }
-        
-        .product-card .product-img {
-            aspect-ratio: 1 / 1 !important;
-            object-fit: contain !important;
-            padding: 0 !important;
-            background: #fff !important;
-            mix-blend-mode: multiply; /* МАГІЯ: Видаляє світло-сірий фон з фото */
-        }
+        .product-card .product-img { aspect-ratio: 1 / 1 !important; object-fit: contain !important; padding: 0 !important; background: #fff !important; mix-blend-mode: multiply; }
         [data-theme="dark"] .product-card .product-img { mix-blend-mode: normal; background: transparent !important; }
-        
         .product-card .p-4 { padding: 10px 8px !important; }
-        .product-card ha, .product-card span { line-height: 1.2; }
 
-        /* --- ШАПКА (Мобільна: Лого по центру, Пошук зліва, Чат справа) --- */
         @media (max-width: 1024px) {
-            #header { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; }
+            #header { display: flex; justify-content: space-between; align-items: center; padding: 0 12px !important; }
             .bv-logo { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
         }
 
-        /* Кнопка нагору */
         #scrollToTopBtn { left: 1rem !important; right: auto !important; }
         @media(min-width: 768px) { #scrollToTopBtn { left: auto !important; right: 2.5rem !important; } }
-        
-        /* Футер колонки для моб */
         .footer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem 1rem; text-align: left; }
         @media(min-width: 768px) { .footer-grid { grid-template-columns: repeat(4, 1fr); } }
-
-        /* Бокове меню: компактна верхівка */
         .side-menu { padding-top: 16px !important; }
         .mob-menu-title { padding: 12px 0 !important; font-size: 14px !important; font-weight: 600 !important; border-bottom: 1px solid var(--border) !important; }
         .mob-tag, .sub-cat-link { padding: 10px 0 !important; font-size: 13px !important; }
     </style>
 </head>
-<body class="mobile-padding antialiased selection:bg-[#c5a059] selection:text-white pb-[60px] md:pb-0">
+<body class="antialiased selection:bg-[#c5a059] selection:text-white pb-[60px] md:pb-0">
+
+    <div id="dev-banner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"></path><path d="M12 16v-6"></path><circle cx="12" cy="20" r="1.5" fill="currentColor"></circle></svg>
+        <span>Сайт знаходиться в процесі розробки</span>
+    </div>
 
     <div class="menu-overlay" id="overlay" onclick="toggleMenu()" aria-hidden="true"></div>
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()" aria-hidden="true"></div>
@@ -227,18 +275,18 @@
             <div class="hero-overlay absolute inset-0 bg-black/50 z-10"></div>
             <div class="hero-bg hero-img-bg bg-black/40 absolute inset-0 z-0"></div>
             <div class="relative z-20 flex flex-col items-center text-center px-4 hero-content">
-                <span class="hero-subtitle tracking-[0.4em] mb-2">Atelier since 1984</span>
-                <h1 class="hero-title text-[var(--bg-elevated)]">BV Jewelry</h1>
+                <span class="hero-subtitle tracking-[0.4em] mb-2 text-white/80 text-sm">Atelier since 1984</span>
+                <h1 class="hero-title text-white font-serif">BV Jewelry</h1>
             </div>
         </section>
 
-        <section class="max-w-[1920px] mx-auto px-0 md:px-8" id="promo-banner-top">
+        <section class="max-w-[1920px] mx-auto px-0" id="promo-banner-top">
             <div id="mainBannerContainer" class="banner-slider-container min-h-[150px] md:min-h-[400px] rounded-none">
                 <div class="w-full h-full bg-gray-200/10 animate-pulse rounded-none"></div>
             </div>
         </section>
 
-        <section class="max-w-[1920px] mx-auto px-0 md:px-8">
+        <section class="max-w-[1920px] mx-auto px-0">
             <a href="exclusive.html" class="relative block w-full h-[120px] md:h-[400px] overflow-hidden group border-y border-[var(--border)] rounded-none">
                 <img src="https://images.pexels.com/photos/28146843/pexels-photo-28146843.jpeg" class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-[1.5s]">
                 <div class="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-500"></div>
@@ -258,7 +306,7 @@
         <section class="max-w-[1920px] mx-auto px-0 md:px-4" id="categories-section">
             <div class="text-center mb-4 md:mb-12 mt-4">
                 <h3 class="text-[9px] md:text-[10px] uppercase tracking-[0.4em] text-[var(--gold-muted)] font-semibold block mb-2">Our World</h3>
-                <h2 class="hero-title text-[var(--text-main)] !text-[28px] md:!text-[36px]" data-i18n="m2">Каталог</h2>
+                <h2 class="font-serif text-[var(--text-main)] text-[28px] md:text-[36px]" data-i18n="m2">Каталог</h2>
             </div>
             <div class="glass-accordion-container" id="glassAccordion">
                 <div class="glass-panel-item group active rounded-none" onclick="window.toggleAccordionPanel(this)">
@@ -361,10 +409,7 @@
             
             <div class="flex flex-col items-start col-span-2 md:col-span-1">
                 <h4 class="font-serif text-[var(--text-main)] text-sm uppercase tracking-widest mb-4" data-i18n="m4">Контакти</h4>
-                <a href="tel:+380634540901" class="text-[14px] text-[var(--gold-muted)] font-medium mb-2 transition hover:opacity-80 tracking-wide">+38 063 45 40 901</a>
-                <span class="text-[12px] text-[var(--text-muted)] mb-1">Графік: 08:00 - 18:00</span>
-                <span class="text-[12px] text-[var(--text-muted)] mb-4">м. Ізмаїл, вул. Торгова, 68</span>
-                
+                <div id="footerAddressesBlock" class="w-full flex flex-col gap-1 mb-2"></div>
                 <div class="flex items-center gap-4 mt-2">
                     <a href="#" target="_blank" class="inst-link w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-main)] hover:text-[#111] hover:bg-[var(--gold-muted)] hover:border-[var(--gold-muted)] transition-all duration-300">
                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -383,7 +428,5 @@
     <script src="demo-data.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="main.js"></script>
-
-    
 </body>
 </html>
