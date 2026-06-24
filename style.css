@@ -1844,3 +1844,32 @@ aside.custom-scrollbar {
     padding-bottom: env(safe-area-inset-bottom) !important;
     background: var(--bg-card);
 }
+/* --- ФІКС ЕКСКЛЮЗИВУ ТА ГАЛЕРЕЇ --- */
+.process-step {
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.process-img-wrap {
+    width: 100% !important;
+    max-height: 500px !important;
+    display: block !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.process-img-wrap img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+@media (min-width: 768px) {
+    .process-step {
+        flex-direction: row !important;
+    }
+    .process-img-wrap {
+        width: 50% !important;
+    }
+}
