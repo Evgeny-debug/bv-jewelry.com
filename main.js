@@ -353,17 +353,15 @@ function generateMenus() {
             <div class="px-4 pb-6 flex flex-col flex-grow overflow-y-auto custom-scrollbar">
                 <a href="index.html" class="mob-menu-title" onclick="window.toggleMenu()">Головна</a>
                 
-                <div class="menu-divider"></div>
                 
                 <div>
                     <div class="mob-menu-title" onclick="window.toggleAccordion('mobCatList', 'mobCatArrow')">
                         <span data-i18n="m2">Каталог</span>
                         <svg id="mobCatArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-muted)" stroke-width="2" class="transition-transform duration-300"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
-                 <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Галерея</a>
                     <div class="mob-accordion-list" id="mobCatList" style="gap: 0; padding-left: 0;">${mobCatHtml}</div>
                 </div>
-                
+                <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Галерея</a>
                 <div>
                     <div class="mob-menu-title cursor-pointer" onclick="window.toggleAccordion('mobInfoList', 'mobInfoArrow')">
                         <span>Бренд</span>
@@ -381,7 +379,7 @@ function generateMenus() {
                 <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
                         <span data-i18n="m_atelier">Ексклюзив</span>
                     </a>
-                <div class="menu-divider mt-4"></div>
+                
                 
                 <div class="mt-auto pt-4 pb-4">
                     <div class="flex flex-col gap-1 text-xs text-[var(--text-muted)] font-light mb-6 px-2">
