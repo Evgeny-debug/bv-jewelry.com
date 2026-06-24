@@ -533,8 +533,23 @@ header.scrolled {
     .mob-accordion-list.open { max-height: 2000px; opacity: 1; margin-top: 10px; } 
     .mob-nested-wrap { border-bottom: 1px solid var(--border); }
     .mob-nested-title { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; transition: 0.3s; }
-    .mob-nested-list { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 10px; }
-    .mob-nested-list.open { max-height: 800px; padding: 15px 10px; margin-bottom: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; }
+    .mob-nested-list {
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.4s ease, padding 0.4s ease; 
+    padding: 0 10px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important; /* Трохи більше повітря */
+}
+    .mob-nested-list.open { 
+    max-height: 1500px !important; 
+    padding: 15px 12px !important; 
+    margin-bottom: 15px !important; 
+    background: rgba(255,255,255,0.03) !important; /* Легкий фон */
+    border-radius: 12px; 
+}
     .mob-sub-links { display: flex; flex-direction: column; gap: 16px; margin-bottom: 10px; }
     .mob-sub-links .sub-cat-link { font-size: 14px; opacity: 0.7;}
     .mob-sub-links .sub-cat-link:hover { color: var(--gold-muted); opacity: 1;}
@@ -1061,21 +1076,23 @@ body.menu-open {
 /* Контейнер для тегів */
 .mob-tags-wrap {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: wrap; /* Дозволяє переносити теги на наступний рядок */
+    gap: 8px !important;
+    width: 100%;
 }
-
 /* Мобільні кнопки-теги (зручні для тапу) */
-.mob-tag {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-main);
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    text-decoration: none;
-    background: color-mix(in srgb, var(--bg-elevated) 40%, transparent);
+.mob-tag { 
+    font-size: 12px !important; 
+    font-weight: 500; 
+    color: var(--text-main); 
+    padding: 6px 12px !important; /* Компактніше */
+    border: 1px solid var(--border); 
+    border-radius: 6px; 
+    text-decoration: none; 
+    background: rgba(255,255,255,0.05); 
     transition: all 0.2s;
+    display: inline-flex; /* Щоб краще трималися в рядку */
+    flex: 0 0 auto; /* Не даємо їм розтягуватися */
 }
 .mob-tag:active {
     background: var(--gold-muted);
