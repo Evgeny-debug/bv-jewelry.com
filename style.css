@@ -1827,3 +1827,71 @@ aside.custom-scrollbar {
     padding-bottom: env(safe-area-inset-bottom) !important;
     background: var(--bg-card);
 }
+/* --- ВИПРАВЛЕННЯ БАНЕРА --- */
+.banner-slider-container {
+    width: 100% !important;
+    position: relative;
+    border-radius: 0 !important;
+    overflow: hidden;
+}
+
+/* Десктоп (широкий панорамний) */
+@media (min-width: 1024px) {
+    .banner-slider-container {
+        aspect-ratio: 21 / 9 !important;
+        max-height: 600px !important; 
+        height: auto !important;
+    }
+}
+
+/* Планшет */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .banner-slider-container {
+        aspect-ratio: 16 / 9 !important;
+    }
+}
+
+/* Мобільні пристрої (вертикальний формат) */
+@media (max-width: 767px) {
+    .banner-slider-container {
+        aspect-ratio: 4 / 5 !important;
+        min-height: 400px !important;
+        height: auto !important;
+    }
+    .banner-slide img {
+        object-position: center top !important; /* Щоб на телефоні фокус був на верхній частині фото */
+    }
+}
+/* --- ВИПРАВЛЕННЯ АКОРДЕОНУ В МЕНЮ --- */
+.mob-nested-list {
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.4s ease, padding 0.4s ease; 
+    padding: 0 10px;
+    display: flex; /* РОБИМО КОНТЕЙНЕР ФЛЕКСОМ */
+    flex-direction: column; /* В СТОВПЧИК */
+    align-items: flex-start; /* ПРИТИСКАЄМО ДО ЛІВОГО КРАЮ */
+    gap: 8px; /* ЧІТКА ВІДСТАНЬ МІЖ ПУНКТАМИ */
+}
+
+.mob-nested-list.open { 
+    max-height: 1500px; /* Збільшив висоту, щоб точно влізли всі підпункти */
+    padding: 15px 10px; 
+    margin-bottom: 10px; 
+    background: rgba(0,0,0,0.05); 
+    border-radius: 12px; 
+}
+
+.mob-tag { 
+    font-size: 13px !important; 
+    font-weight: 500; 
+    color: var(--text-main); 
+    padding: 8px 16px !important; /* Робимо кнопки акуратними */
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
+    text-decoration: none; 
+    background: color-mix(in srgb, var(--bg-elevated) 40%, transparent); 
+    transition: all 0.2s;
+    display: inline-block; /* Забороняємо елементам "ламатися" */
+    width: fit-content;
+}
