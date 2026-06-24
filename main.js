@@ -360,6 +360,7 @@ function generateMenus() {
                         <span data-i18n="m2">Каталог</span>
                         <svg id="mobCatArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-muted)" stroke-width="2" class="transition-transform duration-300"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
+                 <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Галерея</a>
                     <div class="mob-accordion-list" id="mobCatList" style="gap: 0; padding-left: 0;">${mobCatHtml}</div>
                 </div>
                 
@@ -369,7 +370,6 @@ function generateMenus() {
                         <svg id="mobInfoArrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="transition-transform duration-300"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
                     <div class="mob-accordion-list" id="mobInfoList" style="gap: 5px; padding-left: 10px;">
-                        <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Галерея</a>
                         <a href="info.html?p=about" class="sub-cat-link py-3 block text-[14px] opacity-80" onclick="window.toggleMenu()">Про нас</a>
                         <a href="info.html?p=warranty" class="sub-cat-link py-3 block text-[14px] opacity-80" onclick="window.toggleMenu()">Гарантія та повернення</a>
                         <a href="info.html?p=terms" class="sub-cat-link py-3 block text-[14px] opacity-80" onclick="window.toggleMenu()">Оплата і доставка</a>
