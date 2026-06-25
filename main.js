@@ -142,6 +142,7 @@ window.loadCloudData = async function() {
     if (typeof generateMenus === 'function') generateMenus();
     if (typeof initBannerSlider === 'function') initBannerSlider();
     if (document.getElementById('dynamicHomeBlocksContainer')) renderHomeSections();
+    if (typeof renderDynamicIndexContent === 'function') renderDynamicIndexContent();
     if (typeof renderGalleryPage === 'function') renderGalleryPage();
 
     // 2. Асинхронно оновлюємо дані з бази (не чекаємо їх для рендеру)
@@ -170,6 +171,7 @@ window.loadCloudData = async function() {
         if(typeof generateMenus === 'function') generateMenus();
         if(typeof renderHomeSections === 'function') renderHomeSections();
         if(typeof window.applyAdminSettings === 'function') window.applyAdminSettings();
+        if(typeof renderDynamicIndexContent === 'function') renderDynamicIndexContent();
         if(typeof renderGalleryPage === 'function') renderGalleryPage();
     } catch (err) {
         console.error("Помилка зв'язку з Supabase (можливо, база спить):", err);
@@ -224,14 +226,12 @@ function escapeHtml(unsafe) {
 
 window.getCategoryIconSVG = function(catId) {
     const id = catId.toLowerCase();
-    
     if (id.includes('gold')) return `<path d="M12 2l3 5h4l-3 5 1 6-5-3-5 3 1-6-3-5h4z" stroke="currentColor" stroke-width="2" fill="none"/>`; 
     if (id.includes('silver')) return `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>`;
     if (id.includes('ring')) return `<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2" fill="none"/>`; 
     if (id.includes('earring')) return `<path d="M12 2a5 5 0 0 1 5 5c0 3-5 5-5 10m0-15a5 5 0 0 0-5 5c0 3 5 5 5 10" stroke="currentColor" stroke-width="2" fill="none"/>`; 
     if (id.includes('chain') || id.includes('neck')) return `<path d="M6 12h12M6 8h12M6 16h12" stroke="currentColor" stroke-width="2" fill="none"/>`; 
     if (id.includes('bracelet')) return `<path d="M3 12c0-5 3-9 9-9s9 4 9 9-3 9-9 9-9-4-9-9z" stroke="currentColor" stroke-width="2" fill="none"/>`; 
-    
     return `<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" fill="none"/>`; 
 }
 
@@ -364,7 +364,7 @@ function generateMenus() {
                     </div>
                     <div class="mob-accordion-list" id="mobCatList" style="gap: 0; padding-left: 0;">${mobCatHtml}</div>
                 </div>
-                <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Фото з майстерні</a>
+                <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Фото з майстерні (Галерея)</a>
                 <div>
                     <div class="mob-menu-title cursor-pointer" onclick="window.toggleAccordion('mobInfoList', 'mobInfoArrow')">
                         <span>Бренд</span>
@@ -381,7 +381,7 @@ function generateMenus() {
                 <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Наші послуги</span></a>
                 <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
                         <span data-i18n="m_atelier">Ексклюзив</span>
-                    </a>
+                </a>
                 
                 <div class="mt-auto pt-4 pb-4">
                     <div class="flex flex-col gap-1 text-xs text-[var(--text-muted)] font-light mb-6 px-2">
@@ -394,26 +394,6 @@ function generateMenus() {
         `;
     }
 }
-
-window.smartProfileClick = function() {
-    if(document.getElementById('sideMenu')?.classList.contains('active')) {
-        window.toggleMenu(); 
-    }
-    const user = API.get('bv_current_user', null);
-    if (user && user.id) {
-        window.location.href = 'profile.html';
-    } else {
-        window.openAuthModal();
-    }
-};
-
-window.openAuthModal = function() {
-    const modal = document.getElementById('authModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.remove('opacity-0'), 10);
-    }
-};
 
 // ==========================================
 // 5. КОШИК ТА УЛЮБЛЕНЕ
@@ -454,15 +434,7 @@ window.addToCart = function(id, title, variant, price, img) {
         existing.qty += 1;
     } else {
         cart.push({ 
-            cartId: cartId, 
-            id: id, 
-            title: cleanTitle, 
-            variant: String(variant), 
-            price: Number(price), 
-            img: String(img), 
-            qty: 1,
-            sku: sku,
-            size: extractedSize
+            cartId: cartId, id: id, title: cleanTitle, variant: String(variant), price: Number(price), img: String(img), qty: 1, sku: sku, size: extractedSize
         });
     }
     
@@ -565,7 +537,6 @@ window.renderCart = function() {
         checkoutBtnWrapper.innerHTML = `<button id="checkoutBtn" onclick="window.checkoutOrder()" class="btn-solid w-full bg-[var(--gold-muted)] !text-[#111] font-bold uppercase tracking-widest py-3 rounded-none hover:opacity-90 transition-opacity active:scale-95 border-none">Оформити замовлення</button>`;
     }
 };
-
 window.toggleFavDrawer = function() {
     const drawer = document.getElementById('favDrawer');
     const overlay = document.getElementById('favOverlay');
@@ -941,7 +912,6 @@ window.renderHomeSections = function() {
         if (items.length > 0) {
             const title = window.getLoc(block.name);
             const trackId = `block-track-${block.id}`;
-            // Строгі відступи, без зазорів, 0 gap, ширина 50%
             const cardWrapper = (p) => `<div class="flex-none w-[50%] sm:w-[33.333%] md:w-[25%] lg:w-[20%] xl:w-[16.666%] snap-start flex">${window.renderProductCard(p)}</div>`;
             
             let blockItems = [...items];
@@ -970,6 +940,51 @@ window.renderHomeSections = function() {
             window.initPremiumCarousel(track);
         }
     });
+};
+
+// НОВЕ: ДИНАМІЧНИЙ РЕНДЕР АКОРДЕОНУ ТА ФУТЕРА
+window.renderDynamicIndexContent = function() {
+    // 1. Динамічний Футер (беремо перші 4 категорії)
+    const footerCatContainer = document.getElementById('footerDynamicCategories');
+    if (footerCatContainer && categoriesTree.length > 0) {
+        let fHtml = '<h4 class="font-serif text-[var(--text-main)] text-sm uppercase tracking-widest mb-4" data-i18n="m2">Каталог</h4>';
+        categoriesTree.slice(0, 4).forEach(cat => {
+            fHtml += `<a href="catalog.html#${cat.id}" class="text-[12px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] mb-3 transition">${window.getLoc(cat.name)}</a>`;
+        });
+        footerCatContainer.innerHTML = fHtml;
+    }
+
+    // 2. Динамічний Акордеон
+    const accordion = document.getElementById('glassAccordion');
+    if (accordion && categoriesTree.length > 0) {
+        const allProducts = API.get('bv_products', []);
+        let accHtml = '';
+        
+        categoriesTree.slice(0, 4).forEach((cat, index) => {
+            // Шукаємо перше фото першого товару в цій категорії
+            let bgImg = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800'; // заглушка
+            const catProducts = allProducts.filter(p => p.category === cat.id);
+            if (catProducts.length > 0 && catProducts[0].img) {
+                bgImg = catProducts[0].img;
+            } else if (catProducts.length > 0 && catProducts[0].images && catProducts[0].images.length > 0) {
+                bgImg = catProducts[0].images[0];
+            }
+            
+            const activeClass = index === 0 ? 'active' : '';
+            accHtml += `
+            <div class="glass-panel-item group ${activeClass} rounded-none" onclick="window.toggleAccordionPanel(this)">
+                <img src="${bgImg}" class="panel-bg">
+                <div class="panel-overlay"></div>
+                <div class="panel-content">
+                    <h3 class="panel-title">${window.getLoc(cat.name)}</h3>
+                    <div class="panel-hidden-content">
+                        <a href="catalog.html#${cat.id}" class="panel-btn">Всі вироби &rarr;</a>
+                    </div>
+                </div>
+            </div>`;
+        });
+        accordion.innerHTML = accHtml;
+    }
 };
 
 window.applyAdminSettings = function() {
@@ -1004,29 +1019,29 @@ window.applyAdminSettings = function() {
         if(settings.instLink) document.querySelectorAll('.inst-link').forEach(link => link.href = settings.instLink);
         
         const footerAddrBlock = document.getElementById('footerAddressesBlock');
-if (footerAddrBlock && settings.addresses && settings.addresses.length > 0) {
-    let html = '';
-    
-    // Виводимо ПЕРШУ адресу
-    html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
-                <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                <span class="text-left leading-tight">${settings.addresses[0]}</span>
-            </a>`;
+        if (footerAddrBlock && settings.addresses && settings.addresses.length > 0) {
+            let html = '';
             
-    // Виводимо ДРУГУ адресу, якщо вона є
-    if (settings.addresses.length > 1) {
-        html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[1])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
-                    <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    <span class="text-left leading-tight">${settings.addresses[1]}</span>
-                </a>`;
-    }
-    
-    // Кнопка "Ще філіали" якщо адрес більше двох
-    if (settings.addresses.length > 2) {
-        html += `<button onclick="window.showBranchesModal()" class="text-[10px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-1">Всі філіали (${settings.addresses.length})</button>`;
-    }
-    footerAddrBlock.innerHTML = html;
-}
+            // Перша адреса
+            html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+                        <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <span class="text-left leading-tight">${settings.addresses[0]}</span>
+                    </a>`;
+                    
+            // Друга адреса
+            if (settings.addresses.length > 1) {
+                html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[1])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+                            <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            <span class="text-left leading-tight">${settings.addresses[1]}</span>
+                        </a>`;
+            }
+            
+            // Кнопка "Ще філіали"
+            if (settings.addresses.length > 2) {
+                html += `<button onclick="window.showBranchesModal()" class="text-[10px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-1">Всі філіали (${settings.addresses.length})</button>`;
+            }
+            footerAddrBlock.innerHTML = html;
+        }
     }
 };
 
@@ -1035,7 +1050,7 @@ window.showBranchesModal = function() {
     const addrs = settings.addresses || [];
     if(addrs.length === 0) return;
     
-    const list = addrs.map(a => `<a href="http://maps.google.com/?q=${encodeURIComponent(a)}" target="_blank" class="block p-4 border border-[var(--border)] rounded-none hover:border-[var(--gold-muted)] text-[var(--text-main)] text-sm mb-3 transition-colors flex items-center justify-between group">
+    const list = addrs.map(a => `<a href="https://maps.google.com/?q=${encodeURIComponent(a)}" target="_blank" class="block p-4 border border-[var(--border)] rounded-none hover:border-[var(--gold-muted)] text-[var(--text-main)] text-sm mb-3 transition-colors flex items-center justify-between group">
         <span>${a}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--gold-muted)]"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
     </a>`).join('');
@@ -1096,7 +1111,6 @@ window.renderServicesTable = function() {
 };
 
 window.renderExclusivePage = function() {
-    // ЗАМІНИВ ID НА ПРАВИЛЬНІ, ЯКІ Є В HTML:
     const processContainer = document.getElementById('processListContainer');
     const materialsContainer = document.getElementById('materialsContainer');
     
@@ -1193,14 +1207,15 @@ window.changeLang = function(lang) {
     if(document.getElementById('dynamicHomeBlocksContainer') && typeof renderHomeSections === 'function') renderHomeSections();
     if(typeof window.renderCatalogBatch === 'function') window.renderCatalogBatch(); 
     if(document.getElementById('productContainer') && typeof renderProductPage === 'function') renderProductPage();
+    if(typeof renderDynamicIndexContent === 'function') renderDynamicIndexContent();
+    if(typeof renderGalleryPage === 'function') renderGalleryPage();
     
     const mobLangList = document.getElementById('mobLangList');
     if(mobLangList && mobLangList.classList.contains('open')) window.toggleAccordion('mobLangList', 'mobLangArrow');
 };
 
-// НОВА ФУНКЦІЯ: Глобальне створення модалки авторизації
 window.injectAuthModal = function() {
-    if (document.getElementById('authModal')) return; // Вже існує
+    if (document.getElementById('authModal')) return; 
 
     const modalHtml = `
     <div id="authModal" class="fixed inset-0 bg-black/80 z-[6000] hidden opacity-0 transition-opacity flex items-center justify-center p-4 backdrop-blur-md" aria-modal="true" role="dialog">
@@ -1268,249 +1283,6 @@ window.injectAuthModal = function() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 };
 
-window.injectGlobalUI = function() {
-    window.injectAuthModal(); // Створюємо модалку глобально
-    if (!document.getElementById('scrollToTopBtn')) {
-        document.body.insertAdjacentHTML('beforeend', `<button id="scrollToTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})" aria-label="Вверх" class="btn-cross fixed bottom-[165px] left-4 z-[4800] w-12 h-12 bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--border)] rounded-none flex items-center justify-center text-[var(--gold-muted)] shadow-[0_5px_20px_rgba(0,0,0,0.3)] opacity-0 translate-y-4 pointer-events-none transition-all duration-300 active:scale-95 md:bottom-10 md:left-10 hover:bg-[var(--gold-muted)] hover:text-[var(--bg-body)]"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></button>`);
-    }
-};
-
-window.toggleAccordionPanel = function(clickedPanel) {
-    const allPanels = document.querySelectorAll('.glass-panel-item');
-    if (clickedPanel.classList.contains('active')) return;
-    allPanels.forEach(panel => panel.classList.remove('active'));
-    clickedPanel.classList.add('active');
-};
-
-// ==========================================
-// 13. ПОШУК, АВТОРИЗАЦІЯ ТА REALTIME (SUPABASE)
-// ==========================================
-window.executeSearch = function(query) {
-    if (!query || !query.trim()) return;
-    window.location.href = `catalog.html?search=${encodeURIComponent(query.trim())}`;
-};
-
-window.toggleMobileSearch = function(forceClose = null) {
-    const searchBox = document.getElementById('mobSearchContainer');
-    if (!searchBox) return;
-    if (forceClose === true) { searchBox.classList.add('hidden'); return; }
-    if (forceClose === false) { searchBox.classList.remove('hidden'); }
-    else { searchBox.classList.toggle('hidden'); }
-    if (!searchBox.classList.contains('hidden')) { setTimeout(() => { const inp = document.getElementById('mobSearchOverlayInput'); if (inp) inp.focus(); }, 100); }
-};
-
-window.closeAuthModal = function() {
-    const modal = document.getElementById('authModal');
-    if(modal) { modal.classList.add('opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); }
-};
-
-window.toggleAuthMode = function(e) {
-    e.preventDefault(); window.isRegisterMode = !window.isRegisterMode; updateAuthView();
-};
-
-window.updateAuthView = function() {
-    document.getElementById('authTitle').innerText = window.isRegisterMode ? 'Реєстрація' : 'Вхід';
-    document.getElementById('authSubtitle').innerText = window.isRegisterMode ? 'Приєднуйтесь до світу BV Jewelry' : 'Раді бачити вас знову';
-    document.getElementById('authSubmitBtn').innerText = window.isRegisterMode ? 'Створити акаунт' : 'Увійти';
-    document.getElementById('authToggleText').innerText = window.isRegisterMode ? 'Вже є акаунт?' : 'Немає акаунта?';
-    document.getElementById('authToggleLink').innerText = window.isRegisterMode ? 'Увійти' : 'Зареєструватися';
-    
-    const nameField = document.getElementById('nameFieldContainer');
-    if(nameField) {
-        if(window.isRegisterMode) {
-            nameField.classList.remove('hidden'); nameField.classList.add('flex'); document.getElementById('authName').required = true;
-        } else {
-            nameField.classList.add('hidden'); nameField.classList.remove('flex'); document.getElementById('authName').required = false;
-        }
-    }
-};
-
-window.loginWithGoogle = async function() {
-    if(typeof _supabase === 'undefined') return alert('Помилка підключення бази даних.');
-    await _supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
-};
-
-window.loginWithApple = async function() {
-    if(typeof _supabase === 'undefined') return alert('Помилка підключення бази даних.');
-    await _supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: window.location.origin + window.location.pathname } });
-};
-
-window.updateProfileMenu = function() {
-    const user = getCurrentUser();
-    const dropdownMenu = document.getElementById('profileDropdownMenu');
-    // ДОДАЄМО: оновлюємо подію для кліку на іконку профілю в шапці
-    const profileBtn = document.getElementById('headerProfileBtn');
-    if (profileBtn) {
-        // Якщо юзер є - перекидаємо в кабінет, якщо нема - відкриваємо модалку
-        profileBtn.onclick = function() {
-            if (user) location.href = 'profile.html';
-            else window.openAuthModal();
-        };
-    }
-
-    
-    if(dropdownMenu) {
-        if (user) {
-            dropdownMenu.innerHTML = `
-                <a href="profile.html" class="dropdown-item w-full text-left font-medium">Мій кабінет</a>
-                ${user.role === 'admin' ? '<a href="admin.html" class="dropdown-item w-full text-left font-bold text-[#c5a059]">Панель Адміна</a>' : ''}
-                <button onclick="logoutUser()" class="btn-cross dropdown-item w-full text-left text-red-400 hover:text-red-500 mt-2 border-t border-[var(--border)] pt-2">Вийти з акаунту</button>
-            `;
-        } else {
-            dropdownMenu.innerHTML = `
-                <button onclick="window.isRegisterMode=false; window.openAuthModal();" class="btn-cross dropdown-item w-full text-left font-medium">Увійти</button>
-                <button onclick="window.isRegisterMode=true; window.openAuthModal();" class="btn-cross dropdown-item w-full text-left font-medium text-[#c5a059]">Зареєструватися</button>
-            `;
-        }
-    }
-};
-
-window.initRealtime = function() {
-    const user = getCurrentUser();
-    if(!user) return;
-
-    _supabase.channel('custom-user-orders')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, (payload) => {
-            const newStatus = payload.new.status;
-            let statusText = 'Оновлено';
-            if(newStatus === 'accepted') statusText = 'Прийнято в обробку';
-            if(newStatus === 'shipped') statusText = 'Відправлено';
-            if(newStatus === 'completed') statusText = 'Виконано';
-            if(newStatus === 'cancelled') statusText = 'Скасовано';
-            
-            alert(`📦 Статус вашого замовлення #${payload.new.id} змінено: ${statusText}!`);
-        })
-        .subscribe();
-};
-
-window.logoutUser = async function() {
-    if(typeof _supabase !== 'undefined' && _supabase.auth) {
-        _supabase.removeAllChannels();
-        await _supabase.auth.signOut();
-    }
-    API.set('bv_current_user', null); 
-    API.set('bv_favs', []); 
-    API.set('bv_cart', []);
-    sessionStorage.removeItem('isAdminAuth'); 
-    
-    if (window.location.pathname.includes('admin.html') || window.location.pathname.includes('profile.html')) {
-        window.location.href = 'index.html';
-    } else {
-        if(typeof window.renderCart === 'function') window.renderCart(); 
-        if(typeof window.renderFavDrawer === 'function') window.renderFavDrawer();
-        window.updateProfileMenu(); 
-    }
-};
-
-// ==========================================
-// 14. ГЛОБАЛЬНИЙ СТАРТ ТА СЛУХАЧІ
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    // ВПРИСКУЄМО МОДАЛКУ ОДРАЗУ, ЩОБ ПІДХОПИТИ ПОДІЇ
-    if(typeof window.injectAuthModal === 'function') window.injectAuthModal();
-
-    const deskSearch = document.querySelector('.search-input.desktop-only') || document.querySelector('.desktop-only .search-input');
-    if (deskSearch) { deskSearch.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.executeSearch(e.target.value); }); }
-    const overlayInput = document.getElementById('mobSearchOverlayInput');
-    if (overlayInput) { overlayInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') window.executeSearch(e.target.value); }); }
-
-    if(window.location.hash && window.location.hash.includes('access_token')) {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (session && session.user) {
-            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', session.user.id).single();
-            const role = (profile && profile.role === 'admin') ? 'admin' : 'client';
-            const fullName = (profile && profile.full_name) ? profile.full_name : (session.user.user_metadata?.full_name || 'Клієнт');
-            const userFavs = profile && profile.favs ? profile.favs : [];
-
-            API.set('bv_current_user', { id: session.user.id, username: session.user.email, role: role, name: fullName, favs: userFavs });
-            if (role === 'admin') sessionStorage.setItem('isAdminAuth', 'true');
-            API.set(getScopedStorageKey('bv_favs'), userFavs);
-            
-            history.replaceState(null, null, ' ');
-            window.updateProfileMenu();
-            if(typeof window.renderFavDrawer === 'function') window.renderFavDrawer();
-        }
-    }
-
-    // Тепер authForm точно існує
-    const authForm = document.getElementById('authForm');
-    if(authForm) {
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const originalText = submitBtn.innerText;
-            submitBtn.innerText = 'Зачекайте...';
-            submitBtn.disabled = true;
-
-            const email = document.getElementById('authUser').value.trim();
-            const pass = document.getElementById('authPass').value.trim();
-            const name = document.getElementById('authName') ? document.getElementById('authName').value.trim() : '';
-
-            if (window.isRegisterMode) {
-                if (pass.length < 6) { 
-                    alert('Пароль має містити мінімум 6 символів.'); 
-                    submitBtn.innerText = originalText; submitBtn.disabled = false; return; 
-                }
-                const { data, error } = await _supabase.auth.signUp({
-                    email: email, password: pass, options: { data: { full_name: name } }
-                });
-
-                if (error) {
-                    alert('Помилка реєстрації: ' + error.message);
-                } else {
-                    if(data.user) {
-                        await _supabase.from('profiles').insert([
-                            { id: data.user.id, full_name: name, role: 'client', favs: [] }
-                        ]);
-                    }
-                    alert('Реєстрація успішна! Тепер ви можете увійти.');
-                    window.isRegisterMode = false;
-                    window.updateAuthView();
-                }
-            } else {
-                const { data, error } = await _supabase.auth.signInWithPassword({ email: email, password: pass });
-
-                if (error) {
-                    alert('Невірний логін або пароль!');
-                    submitBtn.innerText = originalText; submitBtn.disabled = false; return;
-                }
-
-                const { data: profile } = await _supabase.from('profiles').select('*').eq('id', data.user.id).single();
-                const role = (profile && profile.role === 'admin') ? 'admin' : 'client';
-                const fullName = (profile && profile.full_name) ? profile.full_name : (data.user.user_metadata?.full_name || 'Клієнт');
-                const userFavs = profile && profile.favs ? profile.favs : [];
-
-                API.set('bv_current_user', { id: data.user.id, username: data.user.email, role: role, name: fullName, favs: userFavs });
-                if (role === 'admin') sessionStorage.setItem('isAdminAuth', 'true');
-                API.set(getScopedStorageKey('bv_favs'), userFavs);
-                
-                closeAuthModal();
-                if(typeof updateBadges === 'function') updateBadges();
-                window.renderFavDrawer();
-                window.initRealtime();
-                window.updateProfileMenu(); 
-            }
-            submitBtn.innerText = originalText; submitBtn.disabled = false;
-        });
-    }
-    
-    const catalogToggle = document.querySelector('.catalog-toggle');
-    const catalogWrapper = document.querySelector('.catalog-dropdown-wrapper');
-    if (catalogToggle && catalogWrapper) {
-        catalogToggle.onclick = function(e) {
-            e.preventDefault();
-            const isOpen = catalogWrapper.classList.toggle('open');
-            document.body.classList.toggle('menu-open', isOpen);
-        };
-        document.addEventListener('click', function(e) {
-            if (catalogWrapper.classList.contains('open') && !catalogWrapper.contains(e.target)) {
-                catalogWrapper.classList.remove('open'); document.body.classList.remove('menu-open');
-            }
-        });
-    }
-});
-
-
 window.renderGalleryPage = function() {
     const container = document.getElementById('galleryGrid');
     if(!container) return;
@@ -1519,7 +1291,6 @@ window.renderGalleryPage = function() {
     const currentLang = API.get('bv_lang', 'uk');
     const activeCat = window.location.hash.replace('#', '') || 'all';
     
-    // Оновлюємо кнопки фільтру
     document.querySelectorAll('.gal-filter-btn').forEach(btn => {
         if(btn.dataset.cat === activeCat) {
             btn.classList.add('bg-[var(--text-main)]', 'text-[var(--bg-body)]', 'border-[var(--text-main)]');
@@ -1547,15 +1318,14 @@ window.renderGalleryPage = function() {
     `).join('');
 };
 
-// Додай слухач хешу
 window.addEventListener('hashchange', () => {
     if(window.location.pathname.includes('gallery.html')) renderGalleryPage();
 });
 
-// window.onload та скролл залишаються без змін
+// window.onload
 window.onload = async () => { 
     if(window.location.pathname.includes('admin.html')) return;
-    window.renderGalleryPage();
+    
     migrateScopedState();
     if(typeof window.injectGlobalUI === 'function') window.injectGlobalUI();
     
