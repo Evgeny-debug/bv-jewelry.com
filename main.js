@@ -1324,42 +1324,52 @@ window.addEventListener('hashchange', () => {
 
 // window.onload
 window.onload = async () => { 
-    if(window.location.pathname.includes('admin.html')) return;
-    
-    migrateScopedState();
-    if(typeof window.injectGlobalUI === 'function') window.injectGlobalUI();
-    
-    await window.loadCloudData();
+    try {
+        if(window.location.pathname.includes('admin.html')) return;
+        
+        if(typeof migrateScopedState === 'function') migrateScopedState();
+        if(typeof window.injectGlobalUI === 'function') window.injectGlobalUI();
+        
+        await window.loadCloudData();
 
-    if(document.getElementById('marqueeTrack') && typeof initMarqueeSim === 'function') initMarqueeSim();
-    if(document.getElementById('productContainer') && typeof renderProductPage === 'function') renderProductPage();
-    if(document.getElementById('servicesPriceBody') && typeof renderServicesTable === 'function') renderServicesTable();
-    if(document.getElementById('exclusive-process-container') && typeof renderExclusivePage === 'function') renderExclusivePage();
+        if(document.getElementById('marqueeTrack') && typeof initMarqueeSim === 'function') initMarqueeSim();
+        if(document.getElementById('productContainer') && typeof renderProductPage === 'function') renderProductPage();
+        if(document.getElementById('servicesPriceBody') && typeof renderServicesTable === 'function') renderServicesTable();
+        
+        // Рендер Ексклюзиву
+        if(document.getElementById('processListContainer') && typeof renderExclusivePage === 'function') {
+            window.renderExclusivePage();
+        }
 
-    const savedLang = API.get('bv_lang', 'uk');
-    if(typeof window.changeLang === 'function') window.changeLang(savedLang);
+        const savedLang = API.get('bv_lang', 'uk');
+        if(typeof window.changeLang === 'function') window.changeLang(savedLang);
 
-    const savedTheme = API.get('bv_theme', 'light');
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    const icon = document.getElementById('themeIcon'); 
-    const iconMob = document.getElementById('themeIconMob');
-    const svg = savedTheme === 'light' ? sunSVG : moonSVG;
-    if(icon) icon.innerHTML = svg; 
-    if(iconMob) iconMob.innerHTML = svg;
+        const savedTheme = API.get('bv_theme', 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const icon = document.getElementById('themeIcon'); 
+        const iconMob = document.getElementById('themeIconMob');
+        const svg = savedTheme === 'light' ? sunSVG : moonSVG;
+        if(icon) icon.innerHTML = svg; 
+        if(iconMob) iconMob.innerHTML = svg;
 
-    const yearEl = document.getElementById('currentYear');
-    if(yearEl) yearEl.textContent = new Date().getFullYear();
+        const yearEl = document.getElementById('currentYear');
+        if(yearEl) yearEl.textContent = new Date().getFullYear();
 
-    if(typeof window.renderCart === 'function') window.renderCart(); 
-    if(typeof window.renderFavDrawer === 'function') window.renderFavDrawer();
+        if(typeof window.renderCart === 'function') window.renderCart(); 
+        if(typeof window.renderFavDrawer === 'function') window.renderFavDrawer();
 
-    const currentUser = API.get('bv_current_user', null);
-    if(currentUser || localStorage.getItem('isAdminAuth') === 'true') window.initRealtime();
-    
-    window.updateProfileMenu(); 
+        const currentUser = API.get('bv_current_user', null);
+        if((currentUser || localStorage.getItem('isAdminAuth') === 'true') && typeof window.initRealtime === 'function') {
+            window.initRealtime();
+        }
+        
+        if(typeof window.updateProfileMenu === 'function') window.updateProfileMenu(); 
 
-    const burgerBtn = document.getElementById('burger');
-    if(burgerBtn) { burgerBtn.onclick = function(e) { e.stopPropagation(); if(typeof window.toggleMenu === 'function') window.toggleMenu(); }; }
+        const burgerBtn = document.getElementById('burger');
+        if(burgerBtn) { burgerBtn.onclick = function(e) { e.stopPropagation(); if(typeof window.toggleMenu === 'function') window.toggleMenu(); }; }
+    } catch (err) {
+        console.error("Помилка при завантаженні (onload):", err);
+    }
 };
 
 let lastScrollTop = 0;

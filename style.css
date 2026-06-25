@@ -1895,3 +1895,72 @@ aside.custom-scrollbar {
 }
 
 
+/* ==========================================
+   ФІНАЛЬНІ ВИПРАВЛЕННЯ ДИЗАЙНУ (HERO, БАНЕР, ШАПКА)
+   ========================================== */
+
+/* 1. ІДЕАЛЬНИЙ HERO (Обкладинка) */
+.hero {
+    height: auto !important;
+    min-height: 450px !important;
+    max-height: 60vh !important;
+    margin-top: 90px !important;
+    padding: 80px 20px !important;
+}
+@media (max-width: 768px) {
+    .hero {
+        min-height: 380px !important;
+        max-height: 50vh !important;
+        margin-top: 60px !important;
+        padding: 60px 15px !important;
+    }
+}
+.hero-bg {
+    background-size: cover !important;
+    background-position: center !important;
+    filter: none !important; /* Прибираємо мило з картинки */
+    transform: none !important;
+}
+
+/* 2. РЕКЛАМНИЙ БАНЕР (На всю ширину без обрізок) */
+.banner-slider-container {
+    width: 100% !important;
+    max-width: 1320px !important;
+    margin: 0 auto !important;
+    aspect-ratio: 21 / 9 !important; /* Панорама для ПК */
+    height: auto !important;
+    max-height: none !important;
+}
+.banner-slide img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* ЗАПОВНЮЄ ВЕСЬ ПРОСТІР */
+    object-position: center !important;
+}
+@media (max-width: 1024px) {
+    .banner-slider-container { aspect-ratio: 16 / 9 !important; }
+}
+@media (max-width: 768px) {
+    .banner-slider-container { aspect-ratio: 4 / 5 !important; } /* Вертикальний для мобілок */
+}
+
+/* 3. ШАПКА НА ПК (Місце для меню + Відкриття каталогу) */
+@media (min-width: 1024px) {
+    .nav-left { gap: 16px !important; } /* Зменшуємо відступи між пунктами меню, щоб все влізло */
+    .header-left { gap: 12px !important; }
+    
+    /* Повертаємо відкриття мега-меню по наведенню миші */
+    .catalog-dropdown-wrapper:hover .mega-menu {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
+        pointer-events: auto !important;
+        transition-delay: 0s !important;
+    }
+}
+
+/* 4. ЕКСКЛЮЗИВ КАРТИНКИ */
+.process-step { width: 100%; margin-bottom: 40px; }
+.process-img-wrap { width: 100% !important; max-height: 450px !important; display: block !important; position: relative; overflow: hidden; }
+.process-img-wrap img { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: center !important; }
+@media (min-width: 768px) { .process-step { flex-direction: row !important; } .process-img-wrap { width: 50% !important; } }
