@@ -78,6 +78,7 @@
             <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-white/5 text-[#c5a059] font-medium transition text-sm">🛒 Замовлення</button>
             <button onclick="switchTab('products')" id="tab-products" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">📦 Товари</button>
             <button onclick="switchTab('categories')" id="tab-categories" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">🗂 Категорії</button>
+            <button onclick="switchTab('gallery')" id="tab-gallery" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">📸 Галерея</button>
             <button onclick="switchTab('blocks')" id="tab-blocks" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">🧩 Блоки Головної</button>
             <button onclick="switchTab('home-visuals')" id="tab-home-visuals" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">🖼 Головна (Банери)</button>
             <button onclick="switchTab('exclusive')" id="tab-exclusive" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 transition text-gray-400 text-sm">💎 Ексклюзив</button>
@@ -260,6 +261,44 @@
             </div>
             <div class="mt-6 text-right"><button onclick="saveSiteSettings()" class="btn-primary">Зберегти глобальні</button></div>
         </section>
+
+        <section id="content-gallery" class="tab-content hidden h-full">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold">Галерея робіт</h2>
+        <button onclick="openGalleryModal()" class="btn-primary">+ Додати фото</button>
+    </div>
+    <div class="glass-panel p-6">
+        <div id="galleryAdminList" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    </div>
+</section>
+
+<div id="galleryModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity p-4">
+    <div class="glass-panel p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold mb-4">Фото в Галерею</h3>
+        <form id="galleryForm" onsubmit="event.preventDefault(); saveGalleryItem();">
+            <input type="hidden" id="gal-id">
+            <input type="hidden" id="gal-img">
+            <div class="mb-4">
+                <input type="file" accept="image/*" class="input-field file-input" onchange="handleImageUpload(event, 'galPreview', 'gal-img')">
+                <img id="galPreview" class="w-full h-32 object-cover mt-2 hidden rounded border border-white/20">
+            </div>
+            <div class="mb-4">
+                <label class="text-[10px] uppercase text-gray-400 block mb-1">Категорія</label>
+                <select id="gal-category" class="input-field" required>
+                    <option value="rings">Каблучки</option>
+                    <option value="earrings">Сережки</option>
+                    <option value="necklaces">Ланцюжки</option>
+                    <option value="bracelets">Браслети</option>
+                </select>
+            </div>
+            <div class="mb-3"><input type="text" id="gal-desc-uk" class="input-field" placeholder="Опис UA" required></div>
+            <div class="mb-3"><input type="text" id="gal-desc-ru" class="input-field" placeholder="Опис RU" required></div>
+            <div class="mb-4"><input type="text" id="gal-desc-en" class="input-field" placeholder="Опис EN" required></div>
+            <div class="flex gap-2"><button type="button" onclick="closeGalleryModal()" class="flex-1 btn-secondary py-2 text-sm">Скасувати</button><button type="submit" class="flex-1 btn-primary py-2 text-sm">Зберегти</button></div>
+        </form>
+    </div>
+</div>
+
     </main>
 
     <div id="productModal" class="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center hidden opacity-0 transition-opacity p-0 md:p-4">
@@ -502,6 +541,68 @@
         // ==========================================
         // НАВІГАЦІЯ ТА ВКЛАДКИ
         // ==========================================
+        let galleryItems = [];
+
+// Всередині функції loadAllData() додай цей рядок:
+const { data: gData } = await _supabase.from('site_storage').select('*').eq('key', 'bv_gallery');
+if(gData && gData.length > 0) galleryItems = gData[0].value || [];
+window.renderGalleryAdmin();
+
+window.renderGalleryAdmin = function() {
+    const list = document.getElementById('galleryAdminList');
+    list.innerHTML = galleryItems.map(g => `
+        <div class="bg-white/5 p-2 rounded-lg border border-white/10 relative group">
+            <img src="${g.img}" class="w-full aspect-square object-cover rounded">
+            <div class="mt-2 text-xs text-[#c5a059] font-bold uppercase">${g.category}</div>
+            <div class="text-[10px] text-gray-400 truncate mt-1">${g.desc.uk}</div>
+            <button onclick="deleteGalleryItem(${g.id})" class="absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100">&times;</button>
+        </div>
+    `).join('');
+}
+
+window.openGalleryModal = function() {
+    document.getElementById('galleryForm').reset();
+    document.getElementById('galPreview').classList.add('hidden');
+    document.getElementById('gal-img').value = '';
+    document.getElementById('gal-id').value = Date.now();
+    document.getElementById('galleryModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('galleryModal').classList.remove('opacity-0'), 10);
+}
+
+window.closeGalleryModal = function() {
+    document.getElementById('galleryModal').classList.add('opacity-0');
+    setTimeout(() => document.getElementById('galleryModal').classList.add('hidden'), 300);
+}
+
+window.saveGalleryItem = async function() {
+    const imgData = document.getElementById('gal-img').value;
+    if(!imgData) return alert('Завантажте фото!');
+    
+    galleryItems.push({
+        id: document.getElementById('gal-id').value,
+        img: imgData,
+        category: document.getElementById('gal-category').value,
+        desc: {
+            uk: document.getElementById('gal-desc-uk').value,
+            ru: document.getElementById('gal-desc-ru').value,
+            en: document.getElementById('gal-desc-en').value
+        }
+    });
+    
+    await saveToCloudStorage('bv_gallery', galleryItems);
+    renderGalleryAdmin();
+    closeGalleryModal();
+    showNotification('Фото додано!');
+}
+
+window.deleteGalleryItem = async function(id) {
+    if(confirm('Видалити фото?')) {
+        galleryItems = galleryItems.filter(g => g.id != id);
+        await saveToCloudStorage('bv_gallery', galleryItems);
+        renderGalleryAdmin();
+    }
+}
+        
         function toggleAdminMenu() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -1613,11 +1714,10 @@
             renderAddresses();
         }
 
-        async function saveSiteSettings() {
-    const btn = event.target;
-    const originalText = btn.innerText;
-    btn.innerText = 'Зберігаю...';
-    btn.disabled = true;
+        window.saveSiteSettings = async function() {
+    const btn = document.querySelector('button[onclick="saveSiteSettings()"]');
+    const originalText = btn ? btn.innerText : 'Зберегти';
+    if(btn) { btn.innerText = 'Зберігаю...'; btn.disabled = true; }
 
     try {
         const oldRate = Number(siteSettings.goldRate) || 0;
@@ -1627,7 +1727,6 @@
         const addrInputs = document.querySelectorAll('.addr-input');
         const savedAddresses = Array.from(addrInputs).map(inp => inp.value.trim()).filter(val => val !== '');
 
-        // Обновляем объект настроек
         siteSettings = {
             ...siteSettings,
             phone: document.getElementById('set-phone').value,
@@ -1638,22 +1737,18 @@
             bannerRatio: newRatio
         };
         
-        // Сохраняем настройки в БД
         await saveToCloudStorage('bv_settings', siteSettings);
         
-        // Авто-пересчет цен, если курс изменился
         if (oldRate !== newRate && newRate > 0) {
             products.forEach(p => {
-                // Проходимся по всем вариациям товара
                 Object.values(p.variations).forEach(v => {
                     if (v.priceType === 'auto' && v.weight && v.workCost) {
                         v.price = Math.round((Number(v.weight) * newRate) + Number(v.workCost));
                     }
                 });
             });
-            
             await _supabase.from('products').upsert(products);
-            renderProducts(); // Обновляем таблицу в админке
+            renderProducts(); 
             showNotification('Курс оновлено, ціни перераховано!');
         } else {
             showNotification('Налаштування збережено');
@@ -1662,11 +1757,9 @@
         console.error(err);
         alert('Помилка: ' + err.message);
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        if(btn) { btn.innerText = originalText; btn.disabled = false; }
     }
-}
-
+};
         async function logout() { 
             await _supabase.auth.signOut();
             window.location.href = 'index.html'; 

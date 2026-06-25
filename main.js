@@ -365,7 +365,7 @@ function generateMenus() {
                     </div>
                     <div class="mob-accordion-list" id="mobCatList" style="gap: 0; padding-left: 0;">${mobCatHtml}</div>
                 </div>
-                <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Галерея</a>
+                <a href="gallery.html" class="mob-menu-title border-b border-[var(--border)]" onclick="window.toggleMenu()">Фото з майстерні</a>
                 <div>
                     <div class="mob-menu-title cursor-pointer" onclick="window.toggleAccordion('mobInfoList', 'mobInfoArrow')">
                         <span>Бренд</span>
@@ -379,7 +379,7 @@ function generateMenus() {
                     </div>
                 </div>
                 
-                <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Прайс</span></a>
+                <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Наші полсуги</span></a>
                 <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
                         <span data-i18n="m_atelier">Ексклюзив</span>
                     </a>
@@ -1009,14 +1009,25 @@ window.applyAdminSettings = function() {
         
         const footerAddrBlock = document.getElementById('footerAddressesBlock');
         if (footerAddrBlock && settings.addresses && settings.addresses.length > 0) {
-            let html = '';
-            html += `<a href="http://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[14px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-center gap-2 transition">
-                        <svg class="w-4 h-4 fill-currentColor opacity-60" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        <span>${settings.addresses[0]}</span>
-                    </a>`;
+        let html = '';
+    
+        // Виводимо ПЕРШУ адресу
+            html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+                <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span class="text-left leading-tight">${settings.addresses[0]}</span>
+            </a>`;
             
+            // Виводимо ДРУГУ адресу, якщо вона є
             if (settings.addresses.length > 1) {
-                html += `<button onclick="window.showBranchesModal()" class="btn-cross text-[11px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-2">Наші філіали (${settings.addresses.length})</button>`;
+                html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[1])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+                    <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <span class="text-left leading-tight">${settings.addresses[1]}</span>
+                </a>`;
+            }
+    
+            // Кнопка "Ще філіали" якщо адрес більше двох
+            if (settings.addresses.length > 2) {
+                html += `<button onclick="window.showBranchesModal()" class="text-[10px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-1">Всі філіали (${settings.addresses.length})</button>`;
             }
             footerAddrBlock.innerHTML = html;
         }
@@ -1503,10 +1514,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+
+window.renderGalleryPage = function() {
+    const container = document.getElementById('galleryGrid');
+    if(!container) return;
+    
+    const items = API.get('bv_gallery', []);
+    const currentLang = API.get('bv_lang', 'uk');
+    const activeCat = window.location.hash.replace('#', '') || 'all';
+    
+    // Оновлюємо кнопки фільтру
+    document.querySelectorAll('.gal-filter-btn').forEach(btn => {
+        if(btn.dataset.cat === activeCat) {
+            btn.classList.add('bg-[var(--text-main)]', 'text-[var(--bg-body)]', 'border-[var(--text-main)]');
+            btn.classList.remove('text-[var(--text-main)]', 'bg-transparent');
+        } else {
+            btn.classList.remove('bg-[var(--text-main)]', 'text-[var(--bg-body)]', 'border-[var(--text-main)]');
+            btn.classList.add('text-[var(--text-main)]', 'bg-transparent');
+        }
+    });
+
+    const filtered = activeCat === 'all' ? items : items.filter(i => i.category === activeCat);
+    
+    if(filtered.length === 0) {
+        container.innerHTML = '<p class="text-[var(--text-muted)] italic col-span-full text-center py-10">Тут поки немає фотографій.</p>';
+        return;
+    }
+    
+    container.innerHTML = filtered.map(item => `
+        <div class="flex flex-col gap-3 group">
+            <div class="overflow-hidden rounded-none border border-[var(--border)]">
+                <img src="${item.img}" class="w-full aspect-[4/5] object-cover group-hover:scale-105 transition-transform duration-700">
+            </div>
+            <p class="text-sm font-light text-[var(--text-muted)] leading-relaxed text-center">${item.desc[currentLang] || item.desc.uk}</p>
+        </div>
+    `).join('');
+};
+
+// Додай слухач хешу
+window.addEventListener('hashchange', () => {
+    if(window.location.pathname.includes('gallery.html')) renderGalleryPage();
+});
+
 // window.onload та скролл залишаються без змін
 window.onload = async () => { 
     if(window.location.pathname.includes('admin.html')) return;
-
+    window.renderGalleryPage();
     migrateScopedState();
     if(typeof window.injectGlobalUI === 'function') window.injectGlobalUI();
     
