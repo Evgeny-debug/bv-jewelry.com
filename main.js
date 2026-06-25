@@ -1100,20 +1100,21 @@ window.renderServicesTable = function() {
 };
 
 window.renderExclusivePage = function() {
-    const processContainer = document.getElementById('exclusive-process-container');
-    const materialsContainer = document.getElementById('material-options-container');
+    // ЗАМІНИВ ID НА ПРАВИЛЬНІ, ЯКІ Є В HTML:
+    const processContainer = document.getElementById('processListContainer');
+    const materialsContainer = document.getElementById('materialsContainer');
     
     if(processContainer) {
         const processDB = API.get('bv_exclusive_process', []);
         processContainer.innerHTML = processDB.map((step, idx) => `
-            <div class="flex flex-col md:flex-row gap-6 items-center bg-[var(--bg-card)] border border-[var(--border)] p-6 rounded-none group hover:border-[var(--gold-muted)] transition-colors">
-                <div class="w-full md:w-1/3 aspect-[4/3] bg-black overflow-hidden relative">
-                    <div class="absolute top-2 left-2 bg-[var(--gold-muted)] text-[#111] text-[10px] font-bold uppercase tracking-widest px-2 py-1 z-10">Етап ${idx+1}</div>
-                    <img src="${step.img}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700">
+            <div class="process-step flex flex-col md:flex-row items-center gap-8 md:gap-16 group">
+                <div class="process-img-wrap w-full md:w-1/2 order-1 overflow-hidden rounded-[32px] shadow-2xl relative aspect-[4/3] md:aspect-[4/3]">
+                    <div class="absolute top-4 left-4 bg-[var(--gold-muted)] text-[#111] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full z-10">Етап 0${idx+1}</div>
+                    <img src="${step.img}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
                 </div>
-                <div class="w-full md:w-2/3">
-                    <h3 class="font-serif text-2xl text-[var(--text-main)] mb-3">${step.title}</h3>
-                    <p class="text-sm text-[var(--text-muted)] leading-relaxed">${step.desc}</p>
+                <div class="process-text-wrap w-full md:w-1/2 order-2 flex flex-col justify-center px-2 md:px-0">
+                    <h3 class="text-3xl md:text-4xl font-serif mb-4 text-[var(--text-main)]">${step.title}</h3>
+                    <p class="text-sm md:text-base text-[var(--text-muted)] font-light leading-relaxed max-w-md">${step.desc}</p>
                 </div>
             </div>
         `).join('');
@@ -1122,13 +1123,12 @@ window.renderExclusivePage = function() {
     if(materialsContainer) {
         const matDB = API.get('bv_exclusive_materials', []);
         materialsContainer.innerHTML = matDB.map(m => `
-            <label class="flex-1 cursor-pointer">
-                <input type="radio" name="material" value="${m.id}" class="peer hidden" ${m.selected ? 'checked' : ''}>
-                <div class="border border-[var(--border)] text-center py-4 text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] peer-checked:border-[var(--gold-muted)] peer-checked:text-[var(--gold-muted)] hover:border-[var(--gold-muted)] transition-colors">
-                    ${m.label}
-                </div>
-            </label>
+            <button type="button" class="choice-btn flex-grow sm:flex-grow-0 ${m.selected ? 'active' : ''}" onclick="selectMaterial('${m.id}', this)">
+                ${m.label}
+            </button>
         `).join('');
+        const defaultMat = matDB.find(m => m.selected);
+        if(defaultMat && typeof selectedMaterial !== 'undefined') selectedMaterial = defaultMat.id;
     }
 };
 

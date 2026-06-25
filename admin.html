@@ -508,17 +508,16 @@
                     if (item.key === 'bv_price_list') priceListDB = item.value;
                     if (item.key === 'bv_exclusive_process') exclusiveProcess = item.value;
                     if (item.key === 'bv_exclusive_materials') exclusiveMaterials = item.value;
+                    if (item.key === 'bv_gallery') galleryItems = item.value || []; // Ось правильне місце для галереї!
                 });
             }
 
-            // Фоллбек, якщо немає нових категорій, але є старе дерево
             if(categories.length === 0) {
                 const oldTree = storage?.find(i => i.key === 'bv_categories_tree')?.value || [];
                 categories = flattenOldTree(oldTree);
                 await saveToCloudStorage('bv_categories_flat', categories);
             }
 
-            // Базові блоки, якщо ще не створені
             if(homeBlocks.length === 0) {
                 homeBlocks = [
                     { id: 'hits', name: {uk: 'Хіти місяця', ru: 'Хиты', en: 'Hits'}, active: true },
@@ -534,6 +533,8 @@
             renderExclusiveMaterialsAdmin();
             populateSettings();
             
+            if(typeof window.renderGalleryAdmin === 'function') window.renderGalleryAdmin();
+            
             const priceEditor = document.getElementById('price-json-editor');
             if(priceEditor) priceEditor.value = JSON.stringify(priceListDB, null, 4);
         }
@@ -544,7 +545,7 @@
         let galleryItems = [];
 
 // Всередині функції loadAllData() додай цей рядок:
-const { data: gData } = await _supabase.from('site_storage').select('*').eq('key', 'bv_gallery');
+
 if(gData && gData.length > 0) galleryItems = gData[0].value || [];
 window.renderGalleryAdmin();
 
