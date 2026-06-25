@@ -142,6 +142,7 @@ window.loadCloudData = async function() {
     if (typeof generateMenus === 'function') generateMenus();
     if (typeof initBannerSlider === 'function') initBannerSlider();
     if (document.getElementById('dynamicHomeBlocksContainer')) renderHomeSections();
+    if (typeof renderGalleryPage === 'function') renderGalleryPage();
 
     // 2. Асинхронно оновлюємо дані з бази (не чекаємо їх для рендеру)
     try {
@@ -169,6 +170,7 @@ window.loadCloudData = async function() {
         if(typeof generateMenus === 'function') generateMenus();
         if(typeof renderHomeSections === 'function') renderHomeSections();
         if(typeof window.applyAdminSettings === 'function') window.applyAdminSettings();
+        if(typeof renderGalleryPage === 'function') renderGalleryPage();
     } catch (err) {
         console.error("Помилка зв'язку з Supabase (можливо, база спить):", err);
     }
@@ -217,22 +219,20 @@ function setCart(cart) { API.set(getScopedStorageKey('bv_cart'), cart); API.set(
 
 function escapeHtml(unsafe) {
     if (!unsafe) return '';
-    return unsafe.toString().replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    return unsafe.toString().replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "\"").replace(/'/g, "'");
 }
 
 window.getCategoryIconSVG = function(catId) {
     const id = catId.toLowerCase();
     
-    // Використовуємо простіші та перевірені шляхи для SVG
-    if (id.includes('gold')) return `<path d="M12 2l3 5h4l-3 5 1 6-5-3-5 3 1-6-3-5h4z" stroke="currentColor" stroke-width="2"/>`; 
-    if (id.includes('silver')) return `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>`;
-    if (id.includes('ring')) return `<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/>`; 
-    if (id.includes('earring')) return `<path d="M12 2a5 5 0 0 1 5 5c0 3-5 5-5 10m0-15a5 5 0 0 0-5 5c0 3 5 5 5 10" stroke="currentColor" stroke-width="2"/>`; 
-    if (id.includes('chain') || id.includes('neck')) return `<path d="M6 12h12M6 8h12M6 16h12" stroke="currentColor" stroke-width="2"/>`; 
-    if (id.includes('bracelet')) return `<path d="M3 12c0-5 3-9 9-9s9 4 9 9-3 9-9 9-9-4-9-9z" stroke="currentColor" stroke-width="2"/>`; 
+    if (id.includes('gold')) return `<path d="M12 2l3 5h4l-3 5 1 6-5-3-5 3 1-6-3-5h4z" stroke="currentColor" stroke-width="2" fill="none"/>`; 
+    if (id.includes('silver')) return `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>`;
+    if (id.includes('ring')) return `<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2" fill="none"/>`; 
+    if (id.includes('earring')) return `<path d="M12 2a5 5 0 0 1 5 5c0 3-5 5-5 10m0-15a5 5 0 0 0-5 5c0 3 5 5 5 10" stroke="currentColor" stroke-width="2" fill="none"/>`; 
+    if (id.includes('chain') || id.includes('neck')) return `<path d="M6 12h12M6 8h12M6 16h12" stroke="currentColor" stroke-width="2" fill="none"/>`; 
+    if (id.includes('bracelet')) return `<path d="M3 12c0-5 3-9 9-9s9 4 9 9-3 9-9 9-9-4-9-9z" stroke="currentColor" stroke-width="2" fill="none"/>`; 
     
-    // Дефолтна іконка
-    return `<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>`; 
+    return `<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" fill="none"/>`; 
 }
 
 // ДИНАМІЧНА ГЕНЕРАЦІЯ МЕНЮ З ДЕРЕВА
@@ -357,7 +357,6 @@ function generateMenus() {
             <div class="px-4 pb-6 flex flex-col flex-grow overflow-y-auto custom-scrollbar">
                 <a href="index.html" class="mob-menu-title" onclick="window.toggleMenu()">Головна</a>
                 
-                
                 <div>
                     <div class="mob-menu-title" onclick="window.toggleAccordion('mobCatList', 'mobCatArrow')">
                         <span data-i18n="m2">Каталог</span>
@@ -379,11 +378,10 @@ function generateMenus() {
                     </div>
                 </div>
                 
-                <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Наші полсуги</span></a>
+                <a href="services.html" class="mob-menu-title" onclick="window.toggleMenu()"><span data-i18n="m_price">Наші послуги</span></a>
                 <a href="exclusive.html" class="block w-full border border-[var(--gold-muted)] text-[var(--gold-muted)] py-3 text-center font-bold uppercase tracking-widest text-[10px] hover:bg-[var(--gold-muted)] hover:text-[#111] transition-colors" onclick="window.toggleMenu()">
                         <span data-i18n="m_atelier">Ексклюзив</span>
                     </a>
-                
                 
                 <div class="mt-auto pt-4 pb-4">
                     <div class="flex flex-col gap-1 text-xs text-[var(--text-muted)] font-light mb-6 px-2">
@@ -391,8 +389,6 @@ function generateMenus() {
                         <span>Графік роботи: 08:00 - 18:00</span>
                         <span>м. Ізмаїл, вул. Торгова, 68</span>
                     </div>
-
-                    
                 </div>
             </div>
         `;
@@ -1008,29 +1004,29 @@ window.applyAdminSettings = function() {
         if(settings.instLink) document.querySelectorAll('.inst-link').forEach(link => link.href = settings.instLink);
         
         const footerAddrBlock = document.getElementById('footerAddressesBlock');
-        if (footerAddrBlock && settings.addresses && settings.addresses.length > 0) {
-        let html = '';
+if (footerAddrBlock && settings.addresses && settings.addresses.length > 0) {
+    let html = '';
     
-        // Виводимо ПЕРШУ адресу
-            html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+    // Виводимо ПЕРШУ адресу
+    html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[0])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
                 <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 <span class="text-left leading-tight">${settings.addresses[0]}</span>
             </a>`;
             
-            // Виводимо ДРУГУ адресу, якщо вона є
-            if (settings.addresses.length > 1) {
-                html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[1])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
+    // Виводимо ДРУГУ адресу, якщо вона є
+    if (settings.addresses.length > 1) {
+        html += `<a href="https://maps.google.com/?q=${encodeURIComponent(settings.addresses[1])}" target="_blank" class="text-[13px] text-[var(--text-main)] opacity-90 hover:text-[var(--gold-muted)] flex items-start gap-2 transition mb-3">
                     <svg class="w-4 h-4 fill-currentColor opacity-60 mt-0.5 shrink-0" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                     <span class="text-left leading-tight">${settings.addresses[1]}</span>
                 </a>`;
-            }
+    }
     
-            // Кнопка "Ще філіали" якщо адрес більше двох
-            if (settings.addresses.length > 2) {
-                html += `<button onclick="window.showBranchesModal()" class="text-[10px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-1">Всі філіали (${settings.addresses.length})</button>`;
-            }
-            footerAddrBlock.innerHTML = html;
-        }
+    // Кнопка "Ще філіали" якщо адрес більше двох
+    if (settings.addresses.length > 2) {
+        html += `<button onclick="window.showBranchesModal()" class="text-[10px] font-bold uppercase tracking-widest text-[var(--gold-muted)] hover:underline mt-1">Всі філіали (${settings.addresses.length})</button>`;
+    }
+    footerAddrBlock.innerHTML = html;
+}
     }
 };
 
@@ -1209,7 +1205,7 @@ window.injectAuthModal = function() {
     const modalHtml = `
     <div id="authModal" class="fixed inset-0 bg-black/80 z-[6000] hidden opacity-0 transition-opacity flex items-center justify-center p-4 backdrop-blur-md" aria-modal="true" role="dialog">
         <div class="glass-panel p-8 w-full max-w-sm relative rounded-none shadow-2xl bg-[var(--bg-card)] border border-[var(--border)] overflow-hidden">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--danger)] text-3xl leading-none transition-colors z-10">&times;</button>
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--danger)] text-3xl leading-none transition-colors z-10">×</button>
             <div id="authFormContainer">
                 <h3 id="authTitle" class="text-2xl font-serif text-[var(--text-main)] mb-1 text-center" data-i18n="login">Вхід</h3>
                 <p id="authSubtitle" class="text-center text-[var(--text-muted)] text-xs mb-6 font-light">Раді бачити вас знову</p>
